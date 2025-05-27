@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using MudBlazor.Services;
 using Mylo.Web;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
@@ -10,5 +11,7 @@ builder.Services.AddScoped(sp => new HttpClient
 {
     BaseAddress = new Uri(builder.HostEnvironment.IsDevelopment() ? "https://localhost:44343/" : "https://www.mylolaw.work")
 });
+
+builder.Services.AddMudServices();
 
 await builder.Build().RunAsync();
