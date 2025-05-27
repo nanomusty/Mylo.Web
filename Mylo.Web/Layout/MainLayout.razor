@@ -1,4 +1,11 @@
 ﻿@inherits LayoutComponentBase
+
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject BasePage BasePage
+
+@inject IWebAssemblyHostEnvironment HostEnvironment
+
 @* Required *@
 <MudThemeProvider />
 <MudPopoverProvider />
@@ -9,4 +16,195 @@
 @* Needed for snackbars *@
 <MudSnackbarProvider />
 
-@Body
+<MudLayout>
+    <MudAppBar Elevation="1">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+        <MudText Typo="Typo.h5" Class="ml-3">Mylo</MudText>
+        <MudSpacer />
+        @if (HostEnvironment.IsDevelopment())
+        {
+            <MudText Typo="Typo.h6" Color="Color.Error" Align="Align.Center" Class="development-mode-banner">
+                Development Mode
+            </MudText>
+        }
+        <MudSpacer />
+        @if (userId != Guid.Empty)
+        {
+            <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Dense="true">
+                <ActivatorContent>
+                    <MudStack Row="true" Spacing="2" Class="pa-1" AlignItems="AlignItems.Center">
+                        <MudAvatar Color="Color.Info" Size="Size.Medium">
+                            @(string.IsNullOrEmpty(userEmail) ? "U" : userEmail[0].ToString().ToUpper())
+                        </MudAvatar>
+                        <MudIcon Icon="@Icons.Material.Filled.ArrowDropDown" Class="ml-1" Style="transform: translateY(-1px);" />
+                    </MudStack>
+                </ActivatorContent>
+                <ChildContent>
+                    <MudMenuItem Href="/Account/Profile" Icon="@Icons.Material.Filled.AssignmentInd">Profile</MudMenuItem>
+                    <MudMenuItem Href="/Account/change-password" Icon="@Icons.Material.Filled.Key">Change Password</MudMenuItem>
+                    <MudMenuItem Href="/Account/organisation-information" Icon="@Icons.Material.Filled.Apartment">Organisation Information</MudMenuItem>
+                    <MudMenuItem Href="/Account/feedback" Icon="@Icons.Material.Filled.Feedback">Feedback</MudMenuItem>
+                    <MudMenuItem Icon="@Icons.Material.Filled.Settings">Settings</MudMenuItem>
+                    <MudDivider />
+                    <MudMenuItem OnClick="Logout" Icon="@Icons.Material.Filled.Logout">Sign Out</MudMenuItem>
+                </ChildContent>
+            </MudMenu>
+        }
+        else
+        {
+            <MudButton Href="https://mylolaw.work/Account/Register" StartIcon="@Icons.Material.Filled.Key" Color="Color.Inherit" Class="ml-3"
+                       Disabled="organisationId != Guid.Empty">Register</MudButton>
+            <MudButton Href="Account/Login" StartIcon="@Icons.Material.Filled.Login" Color="Color.Inherit" Class="ml-3">Login</MudButton>
+        }
+    </MudAppBar>
+
+    <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
+
+        @* <MudPaper Class="d-inline-flex py-3" Elevation="0">
+            <MudNavMenu Class="mud-width-full" Color="Color.Info">
+                <MudNavLink Href="dashboard" Icon="@Icons.Material.Filled.Dashboard">Dashboard</MudNavLink>
+                <MudDivider />
+                <MudNavGroup Title="Management" Icon="@Icons.Material.Filled.ManageAccounts">
+                    <MudNavLink Href="/management/organisations" Icon="@Icons.Material.Filled.Apartment">Organisations</MudNavLink>
+                    <MudNavLink Href="/management/feedbacks" Icon="@Icons.Material.Filled.Feedback">Feedbacks</MudNavLink>
+                    <MudNavLink Href="/management/contacts" Icon="@Icons.Material.Filled.ContactMail">Contacts</MudNavLink>
+                    <MudNavLink Href="/management/release-notes" Icon="@Icons.Material.Filled.NewReleases">Release Note</MudNavLink>
+
+                </MudNavGroup>
+                <MudDivider />
+                <MudNavGroup Title="Settings" Icon="@Icons.Material.Filled.Settings">
+                    <MudNavLink Href="/settings/users" Icon="@Icons.Material.Filled.Person">Users</MudNavLink>
+                    <MudNavLink Href="/settings/groups" Icon="@Icons.Material.Filled.Groups">Groups</MudNavLink>
+                </MudNavGroup>
+                <MudNavGroup Title="File" Icon="@Icons.Material.Filled.Folder">
+                    <MudNavLink Href="/file/clients" Icon="@Icons.Material.Filled.Contacts">Clients</MudNavLink>
+                    <MudNavLink Href="/file/debtors" Icon="@Icons.Material.Filled.Person">Debtors</MudNavLink>
+                    <MudNavLink Href="/file/cases" Icon="@Icons.Material.Filled.List">Cases</MudNavLink>
+                    <MudNavLink Href="/file/meetings" Icon="@Icons.Material.Filled.Notes">Meetings</MudNavLink>
+                </MudNavGroup>
+                <MudNavGroup Title="Cost Management" Icon="@Icons.Material.Filled.Payments">
+                    <MudNavLink Href="/cost-management/expenses" Icon="@Icons.Material.Filled.Money">Expenses</MudNavLink>
+                </MudNavGroup>
+                <MudNavGroup Title="Collections" Icon="@Icons.Material.Filled.Payment">
+                    <MudNavLink Href="/collection-management/collections" Icon="@Icons.Material.Filled.Paid">Collections</MudNavLink>
+                </MudNavGroup>
+                <MudNavGroup Title="Asset Management" Icon="@Icons.Material.Filled.Analytics">
+                    <MudNavLink Href="/asset-management/fixture" Icon="@Icons.Custom.Brands.Microsoft">Fixture</MudNavLink>
+                </MudNavGroup>
+                <MudNavGroup Title="Tools" Icon="@Icons.Material.Filled.Handyman">
+                    <MudNavLink Href="/tools/contacts" Icon="@Icons.Material.Filled.Contacts">Contact Cards</MudNavLink>
+                </MudNavGroup>
+                <MudDivider />
+            </MudNavMenu>
+        </MudPaper> *@
+
+        <MudDivider DividerType="DividerType.Middle" />
+
+        <MudNavMenu Class="mud-width-full" Color="Color.Info">
+            <MudNavLink Href="Account/Login" Icon="@Icons.Material.Filled.Login">Login</MudNavLink>
+        </MudNavMenu>
+
+        @* burada amazon affiliate linkleri kullanilacak. hukuk kitaplari icin *@
+
+        @* <MudCard Style="width: 100%;">
+            <MudCardContent>
+                <MudTextField @bind-Value="previewUrl" Label="Affiliate Link Girin" Variant="Variant.Outlined" Dense="true" />
+                <MudButton OnClick="GetPreview" Color="Color.Primary" Variant="Variant.Filled" Class="mt-2">Önizleme Getir</MudButton>
+
+                @if (preview != null)
+                {
+                    <MudPaper Class="mt-3 pa-2">
+                        <img src="@preview.image" style="width: 100%; max-height: 60px; object-fit: cover;" />
+                        <MudText Typo="Typo.subtitle1">@preview.title</MudText>
+                        <MudText Typo="Typo.body2">@preview.description</MudText>
+                        <MudLink Href="@preview.url" Target="_blank">Linke Git</MudLink>
+                    </MudPaper>
+                }
+            </MudCardContent>
+        </MudCard> *@
+
+
+    </MudDrawer>
+    <MudMainContent>
+        @Body
+        <br />
+    </MudMainContent>
+
+@*     <MudPaper Elevation="4" Square="true" Style="height: 30px; position: fixed; bottom: 0; width: 100%">
+        <MudContainer Class="d-flex justify-center align-center">
+            <MudLink Href="https://donate.stripe.com/cN23fN0MQdX4cmI9AA" Target="_blank">
+                <MudButton Variant="Variant.Filled" Color="Color.Secondary">
+                    ☕ Support Mylo
+                </MudButton>
+            </MudLink>
+        </MudContainer>
+    </MudPaper> *@
+</MudLayout>
+
+@code {
+    bool _drawerOpen = true;
+    string previewUrl;
+    PreviewResult preview;
+    // UserType userType;
+    Guid organisationId;
+    Guid userId;
+    string userEmail;
+    // PriceTier priceTier;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        // userEmail = await BasePage.SessionService.GetUserEmailAsync();
+        // userId = await BasePage.SessionService.GetUserIdAsync();
+        // organisationId = await BasePage.SessionService.GetOrganisationIdAsync();
+        // userType = await BasePage.SessionService.GetUserTypeAsync();
+
+        StateHasChanged();
+    }
+
+    private async Task RegisterPage()
+    {
+        BasePage.NavigationManager.NavigateTo("/Account/Register", true);
+        await Task.CompletedTask;
+    }
+
+    void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+
+    private async Task Logout()
+    {
+        // await BasePage.SessionService.ClearSessionAsync();
+
+        // BasePage.NavigationManager.NavigateTo("/Account/Login", true);
+
+        await Task.CompletedTask;
+    }
+
+    public class PreviewResult
+    {
+        public string title { get; set; }
+        public string description { get; set; }
+        public string image { get; set; }
+        public string url { get; set; }
+    }
+
+    private async Task GetPreview()
+    {
+        if (string.IsNullOrWhiteSpace(previewUrl))
+            return;
+
+        try
+        {
+            string apiKey = "322044163827071bd4742a9e1447c5eb";
+            var requestUrl = $"https://api.linkpreview.net/?key={apiKey}&q={Uri.EscapeDataString(previewUrl)}";
+
+            preview = await Http.GetFromJsonAsync<PreviewResult>(requestUrl);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Önizleme hatası: {ex.Message}");
+        }
+    }
+}
