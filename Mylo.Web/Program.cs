@@ -14,7 +14,7 @@ builder.Services.AddScoped(sp => new HttpClient
 });
 
 builder.Services.AddScoped<BasePage>();
-
+builder.Services.AddHttpClient();
 builder.Services.AddMudServices();
 
 await builder.Build().RunAsync();
