@@ -11,43 +11,43 @@
             <MudGrid>
                 <MudItem xs="12" Class="d-flex justify-end">
                     <MudSwitch T="bool"
-                               Color="Color.Primary"
-                               Label="Is Active"
-                               @bind-Value="user.IsActive" />
+                    Color="Color.Primary"
+                    Label="Is Active"
+                    @bind-Value="user.IsActive" />
                 </MudItem>
 
                 <MudItem xs="12" sm="6">
                     <MudTextField @bind-Value="user.FirstName"
-                                  Label="First Name"
-                                  Required="true" />
+                    Label="First Name"
+                    Required="true" />
                 </MudItem>
 
                 <MudItem xs="12" sm="6">
                     <MudTextField @bind-Value="user.LastName"
-                                  Label="Last Name"
-                                  Required="true" />
+                    Label="Last Name"
+                    Required="true" />
                 </MudItem>
 
                 <MudItem xs="12">
                     <MudTextField @bind-Value="user.Email"
-                                  Label="Email"
-                                  Required="true"
-                                  InputType="InputType.Email" />
+                    Label="Email"
+                    Required="true"
+                    InputType="InputType.Email" />
                 </MudItem>
 
                 <MudItem xs="12">
                     <MudTextField @bind-Value="user.Password"
-                                  Label="Password"
-                                  HelperText="Choose a strong password"
-                                  Required="@(User == null)" Validation="@(new Func<string, IEnumerable<string>>(PasswordStrength))"
-                                  InputType="InputType.Password" />
+                    Label="Password"
+                    HelperText="Choose a strong password"
+                    Required="@(User == null)" Validation="@(new Func<string, IEnumerable<string>>(PasswordStrength))"
+                    InputType="InputType.Password" />
                 </MudItem>
 
                 <MudItem xs="12">
                     <MudSelect T="UserType" @bind-Value="user.UserType"
-                               Label="User Type"
-                               Disabled="@(SessionInfo.UserType == UserType.Normal)"
-                               Required="true">
+                    Label="User Type"
+                    Disabled="@(SessionInfo.UserType == UserType.Normal)"
+                    Required="true">
                         <MudSelectItem Value="@(UserType.Administrator)">Administrator</MudSelectItem>
                         <MudSelectItem Value="@(UserType.Normal)">Normal</MudSelectItem>
                     </MudSelect>
@@ -55,9 +55,9 @@
 
                 <MudItem xs="12">
                     <MudSelect T="Guid" Label="Organisation"
-                               @bind-Value="user.OrganisationId"
-                               Disabled="@(SessionInfo.UserType != UserType.SuperAdministrator)"
-                               Required="true">
+                    @bind-Value="user.OrganisationId"
+                    Disabled="@(SessionInfo.UserType != UserType.SuperAdministrator)"
+                    Required="true">
                         @if (organisations != null)
                         {
                             @foreach (var org in organisations)
@@ -125,15 +125,11 @@
                 user.Password = user.Password;
                 await BasePage.InsertApiAsync<User>("User/insert", user);
             }
-            // else
-            // {
-            //     user.ModifiedBy = userEmail;
-            //     if (!string.IsNullOrEmpty(user.Password))
-            //     {
-            //         user.Password = Cryptology.EncryptAES(user.Password);
-            //     }
-            //     await BasePage.UserService.UpdateAsync(user);
-            // }
+            else
+            {
+                user.ModifiedBy = SessionInfo.UserEmail;
+                await BasePage.UpdateApiAsync<User>("User/update", user);
+            }
             MudDialog.Close(DialogResult.Ok(true));
         }
     }

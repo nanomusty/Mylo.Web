@@ -58,102 +58,186 @@ namespace Mylo.Web.Base
 
         public async Task<T> GetAllApiAsync<T>(string url)
         {
-            var httpClient = httpClientFactory.CreateClient("Wasm");
+            try
+            {
+                var httpClient = httpClientFactory.CreateClient("Wasm");
 
-            var token = await localStorage.GetItemAsync<string>("authToken"); // localStorage’dan al
-            if (!string.IsNullOrEmpty(token))
-            {
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            }
+                var token = await localStorage.GetItemAsync<string>("authToken"); // localStorage’dan al
+                if (!string.IsNullOrEmpty(token))
+                {
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                }
 
-            var response = await httpClient.GetAsync(url);
-            if (response.IsSuccessStatusCode)
-            {
-                var responseData = await response.Content.ReadAsStringAsync();
-                return JsonSerializer.Deserialize<T>(responseData, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                var response = await httpClient.GetAsync(url);
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseData = await response.Content.ReadAsStringAsync();
+                    return JsonSerializer.Deserialize<T>(responseData, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                }
+                else
+                {
+                    Snackbar.Add("An error occurred. Please try again.", Severity.Error);
+                    return default;
+                }
             }
-            else
+            catch (Exception ex)
             {
-                Console.WriteLine("Hata oluştu.");
+                Snackbar.Add($"An unexpected error occurred: {ex.Message}", Severity.Error);
                 return default;
             }
         }
 
         public async Task<T> GetApiAsync<T>(string url)
         {
-            var httpClient = httpClientFactory.CreateClient("Wasm");
+            try
+            {
+                var httpClient = httpClientFactory.CreateClient("Wasm");
 
-            var token = await localStorage.GetItemAsync<string>("authToken"); // localStorage’dan al
-            if (!string.IsNullOrEmpty(token))
-            {
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            }
+                var token = await localStorage.GetItemAsync<string>("authToken");
+                if (!string.IsNullOrEmpty(token))
+                {
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                }
 
-            var response = await httpClient.GetAsync(url);
-            if (response.IsSuccessStatusCode)
-            {
-                var responseData = await response.Content.ReadAsStringAsync();
-                return JsonSerializer.Deserialize<T>(responseData, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                var response = await httpClient.GetAsync(url);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseData = await response.Content.ReadAsStringAsync();
+                    return JsonSerializer.Deserialize<T>(responseData, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+                }
+                else
+                {
+                    Snackbar.Add("An error occurred while fetching data.", Severity.Error);
+                    return default;
+                }
             }
-            else
+            catch (Exception ex)
             {
-                Console.WriteLine("Hata oluştu.");
+                Snackbar.Add($"An error occurred: {ex.Message}", Severity.Error);
                 return default;
             }
         }
 
         public async Task<T> DeleteApiAsync<T>(string url, object data)
         {
-            var httpClient = httpClientFactory.CreateClient("Wasm");
-
-            var token = await localStorage.GetItemAsync<string>("authToken"); // localStorage’dan al
-            if (!string.IsNullOrEmpty(token))
+            try
             {
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            }
+                var httpClient = httpClientFactory.CreateClient("Wasm");
 
-            var response = await httpClient.PostAsJsonAsync(url, data);
-
-            if (response.IsSuccessStatusCode)
-            {
-                if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+                var token = await localStorage.GetItemAsync<string>("authToken");
+                if (!string.IsNullOrEmpty(token))
                 {
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                }
+
+                var response = await httpClient.PostAsJsonAsync(url, data);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+                    {
+                        return default;
+                    }
+
+                    var responseData = await response.Content.ReadAsStringAsync();
+                    return JsonSerializer.Deserialize<T>(responseData, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+                }
+                else
+                {
+                    Snackbar.Add("An error occurred while deleting data.", Severity.Error);
                     return default;
                 }
-                var responseData = await response.Content.ReadAsStringAsync();
-                return JsonSerializer.Deserialize<T>(responseData, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             }
-            else
+            catch (Exception ex)
             {
-                Console.WriteLine("Hata oluştu.");
+                Snackbar.Add($"An error occurred: {ex.Message}", Severity.Error);
                 return default;
             }
         }
 
         public async Task<T> InsertApiAsync<T>(string url, object data)
         {
-            var httpClient = httpClientFactory.CreateClient("Wasm");
-
-            var token = await localStorage.GetItemAsync<string>("authToken"); // localStorage’dan al
-            if (!string.IsNullOrEmpty(token))
+            try
             {
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            }
+                var httpClient = httpClientFactory.CreateClient("Wasm");
 
-            var response = await httpClient.PostAsJsonAsync(url, data);
-
-            if (response.IsSuccessStatusCode)
-            {
-                if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+                var token = await localStorage.GetItemAsync<string>("authToken");
+                if (!string.IsNullOrEmpty(token))
                 {
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                }
+
+                var response = await httpClient.PostAsJsonAsync(url, data);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+                    {
+                        return default;
+                    }
+
+                    var responseData = await response.Content.ReadAsStringAsync();
+                    return JsonSerializer.Deserialize<T>(responseData, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+                }
+                else
+                {
+                    Snackbar.Add("An error occurred while saving data.", Severity.Error);
                     return default;
                 }
-                var responseData = await response.Content.ReadAsStringAsync();
-                return JsonSerializer.Deserialize<T>(responseData, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             }
-            else
+            catch (Exception ex)
             {
-                Console.WriteLine("Hata oluştu.");
+                Snackbar.Add($"An error occurred: {ex.Message}", Severity.Error);
+                return default;
+            }
+        }
+
+        public async Task<T> UpdateApiAsync<T>(string url, object data)
+        {
+            try
+            {
+                var httpClient = httpClientFactory.CreateClient("Wasm");
+
+                var token = await localStorage.GetItemAsync<string>("authToken");
+                if (!string.IsNullOrEmpty(token))
+                {
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                }
+
+                var response = await httpClient.PostAsJsonAsync(url, data);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+                    {
+                        return default;
+                    }
+
+                    var responseData = await response.Content.ReadAsStringAsync();
+                    return JsonSerializer.Deserialize<T>(responseData, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+                }
+                else
+                {
+                    Snackbar.Add("An error occurred while saving data.", Severity.Error);
+                    return default;
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"An error occurred: {ex.Message}", Severity.Error);
                 return default;
             }
         }
