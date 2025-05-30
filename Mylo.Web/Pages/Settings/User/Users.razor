@@ -26,23 +26,23 @@
         <MudPaper Class="pa-4">
             <MudToolBar DisableGutters="true" Class="mb-4">
                 <MudButton StartIcon="@Icons.Material.Filled.Add"
-                           OnClick="@OpenCreateDialog"
-                           Color="Color.Primary"
-                           Variant="Variant.Filled">
+                OnClick="@OpenCreateDialog"
+                Color="Color.Primary"
+                Variant="Variant.Filled">
                     New User
                 </MudButton>
             </MudToolBar>
 
             <MudDataGrid Items="@users"
-                         Dense="true"
-                         Hover="true"
-                         Striped="true"
-                         Loading="@loading">
+            Dense="true"
+            Hover="true"
+            Striped="true"
+            Loading="@loading">
                 <Columns>
                     <PropertyColumn Property="x => x.IsActive" Title="Status">
                         <CellTemplate>
                             <MudChip Color="@(context.Item.IsActive ? Color.Success : Color.Error)"
-                                     Size="Size.Small">
+                            Size="Size.Small">
                                 @(context.Item.IsActive ? "Active" : "Inactive")
                             </MudChip>
                         </CellTemplate>
@@ -55,21 +55,21 @@
                         <CellTemplate>
                             <MudTooltip Text="View Details">
                                 <MudIconButton Size="@Size.Small"
-                                               Icon="@Icons.Material.Outlined.Info"
-                                               OnClick="() => Info(context.Item)"
-                                               Color="Color.Info" />
+                                Icon="@Icons.Material.Outlined.Info"
+                                OnClick="() => Info(context.Item)"
+                                Color="Color.Info" />
                             </MudTooltip>
                             <MudTooltip Text="Edit">
                                 <MudIconButton Size="@Size.Small"
-                                               Icon="@Icons.Material.Outlined.Edit"
-                                               OnClick="() => OpenEditDialog(context.Item)"
-                                               Color="Color.Primary" />
+                                Icon="@Icons.Material.Outlined.Edit"
+                                OnClick="() => OpenEditDialog(context.Item)"
+                                Color="Color.Primary" />
                             </MudTooltip>
                             <MudTooltip Text="Delete">
                                 <MudIconButton Size="@Size.Small"
-                                               Icon="@Icons.Material.Outlined.Delete"
-                                               OnClick="() => DeleteUser(context.Item)"
-                                               Color="Color.Error" />
+                                Icon="@Icons.Material.Outlined.Delete"
+                                OnClick="() => DeleteUser(context.Item)"
+                                Color="Color.Error" />
                             </MudTooltip>
                         </CellTemplate>
                     </TemplateColumn>
@@ -86,34 +86,22 @@
     private IEnumerable<User> users;
     private bool loading = false;
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnInitializedAsync()
     {
-        if (!firstRender) return;
         loading = true;
         await LoadData();
         loading = false;
-        StateHasChanged();
     }
 
     private async Task LoadData()
     {
         try
         {
-            loading = true;
             users = await BasePage.GetAllApiAsync<IEnumerable<User>>($"User/get-all?OrganisationId={SessionInfo.OrganisationId}");
         }
         catch (Exception ex)
         {
-            await BasePage.DialogService.ShowMessageBox(
-                "Error",
-                "Failed to load data: " + ex.Message,
-                yesText: "Retry",
-                cancelText: "Close");
-        }
-        finally
-        {
-            loading = false;
-            StateHasChanged();
+            BasePage.Snackbar.Add($"Failed to load data: {ex.Message}", Severity.Error);
         }
     }
 
