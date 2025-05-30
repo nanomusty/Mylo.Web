@@ -1,0 +1,159 @@
+@inject BasePage BasePage
+@inject SessionInfo SessionInfo
+@using System.Text.RegularExpressions
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(User == null ? "New User" : "Edit User")</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm Model="@user" @ref="form">
+            <MudGrid>
+                <MudItem xs="12" Class="d-flex justify-end">
+                    <MudSwitch T="bool"
+                               Color="Color.Primary"
+                               Label="Is Active"
+                               @bind-Value="user.IsActive" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="user.FirstName"
+                                  Label="First Name"
+                                  Required="true" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="user.LastName"
+                                  Label="Last Name"
+                                  Required="true" />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="user.Email"
+                                  Label="Email"
+                                  Required="true"
+                                  InputType="InputType.Email" />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="user.Password"
+                                  Label="Password"
+                                  HelperText="Choose a strong password"
+                                  Required="@(User == null)" Validation="@(new Func<string, IEnumerable<string>>(PasswordStrength))"
+                                  InputType="InputType.Password" />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudSelect T="UserType" @bind-Value="user.UserType"
+                               Label="User Type"
+                               Disabled="@(SessionInfo.UserType == UserType.Normal)"
+                               Required="true">
+                        <MudSelectItem Value="@(UserType.Administrator)">Administrator</MudSelectItem>
+                        <MudSelectItem Value="@(UserType.Normal)">Normal</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudSelect T="Guid" Label="Organisation"
+                               @bind-Value="user.OrganisationId"
+                               Disabled="@(SessionInfo.UserType != UserType.SuperAdministrator)"
+                               Required="true">
+                        @if (organisations != null)
+                        {
+                            @foreach (var org in organisations)
+                            {
+                                <MudSelectItem Value="@(org.Id)">@org.Name</MudSelectItem>
+                            }
+                        }
+                    </MudSelect>
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public User? User { get; set; }
+
+    private User user = new();
+    private MudForm? form;
+    private List<Organisation> organisations = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // organisations = (await BasePage.OrganisationService.GetAllAsync()).ToList();
+        organisations = new List<Organisation>();
+
+        if (User != null)
+        {
+            user = new User
+                {
+                    Id = User.Id,
+                    IsActive = User.IsActive,
+                    FirstName = User.FirstName,
+                    LastName = User.LastName,
+                    Email = User.Email,
+                    Password = User.Password != null ? User.Password : "",
+                    UserType = User.UserType,
+                    OrganisationId = User.OrganisationId
+                };
+        }
+        else
+        {
+            user.OrganisationId = SessionInfo.OrganisationId;
+            user.IsActive = true;
+            user.UserType = SessionInfo.UserType;
+        }
+        await Task.CompletedTask;
+        StateHasChanged();
+    }
+
+    private async Task Submit()
+    {
+        await form.Validate();
+        if (form.IsValid)
+        {
+            if (User == null) // insert
+            {
+                user.CreatedBy = SessionInfo.UserEmail;
+
+                user.Password = user.Password;
+                await BasePage.InsertApiAsync<User>("User/insert", user);
+            }
+            // else
+            // {
+            //     user.ModifiedBy = userEmail;
+            //     if (!string.IsNullOrEmpty(user.Password))
+            //     {
+            //         user.Password = Cryptology.EncryptAES(user.Password);
+            //     }
+            //     await BasePage.UserService.UpdateAsync(user);
+            // }
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+    }
+
+    private IEnumerable<string> PasswordStrength(string pw)
+    {
+        if (string.IsNullOrWhiteSpace(pw))
+        {
+            yield return "Password is required!";
+            yield break;
+        }
+        if (pw.Length < 6)
+            yield return "Password must be at least of length 6";
+        if (!Regex.IsMatch(pw, @"[A-Z]"))
+            yield return "Password must contain at least one capital letter";
+        if (!Regex.IsMatch(pw, @"[a-z]"))
+            yield return "Password must contain at least one lowercase letter";
+        if (!Regex.IsMatch(pw, @"[0-9]"))
+            yield return "Password must contain at least one digit";
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+} 

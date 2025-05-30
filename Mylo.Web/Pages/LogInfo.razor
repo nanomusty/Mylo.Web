@@ -1,0 +1,41 @@
+﻿@using Mylo.Web.ObjectModels
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h3">
+            Information
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTable Items="Entity.Take(1)" Hover="true" Breakpoint="Breakpoint.Sm">
+            <HeaderContent>
+                <MudTh>Created Date</MudTh>
+                <MudTh>Created By</MudTh>
+                <MudTh>Modification Date</MudTh>
+                <MudTh>Modified By</MudTh>
+                <MudTh>Deletion Date</MudTh>
+                <MudTh>Deleted By</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Created Date">@context.CreationDate.ToShortDateString()</MudTd>
+                <MudTd DataLabel="Created By">@context.CreatedBy</MudTd>
+                <MudTd DataLabel="Modification Date">@context.ModificationDate?.ToShortDateString()</MudTd>
+                <MudTd DataLabel="Modified By">@context.ModifiedBy</MudTd>
+                <MudTd DataLabel="Deletion Date">@context.DeletionDate?.ToShortDateString()</MudTd>
+                <MudTd DataLabel="Deleted By">@context.DeletedBy</MudTd>
+            </RowTemplate>
+        </MudTable>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="Submit">Ok</MudButton>
+    </DialogActions>
+</MudDialog>
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    private void Submit() => MudDialog.Close(DialogResult.Ok(true));
+
+    [Parameter]
+    public IEnumerable<BaseEntity> Entity { get; set; }
+}

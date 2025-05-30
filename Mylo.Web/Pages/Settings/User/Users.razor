@@ -1,0 +1,189 @@
+@page "/settings/users"
+
+@using Mylo.Web.ObjectModels
+
+@inject BasePage BasePage
+@inject SessionInfo SessionInfo
+
+<MudContainer MaxWidth="MaxWidth.False" Class="mt-4">
+    @if (loading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-7" />
+    }
+    @if (SessionInfo.OrganisationId == Guid.Empty)
+    {
+        <MudText>This page shows full content only to logged-in users. Please log in to access the full content. Membership is free.</MudText>
+        <MudLink OnClick="@(() => BasePage.RegisterPage())" Underline="Underline.None" Color="Color.Primary">
+            Register Here
+        </MudLink>
+    }
+    else if (SessionInfo.UserType == Enumerations.UserType.Normal)
+    {
+        <MudText>This page is not available for your user type.</MudText>
+    }
+    else
+    {
+        <MudPaper Class="pa-4">
+            <MudToolBar DisableGutters="true" Class="mb-4">
+                <MudButton StartIcon="@Icons.Material.Filled.Add"
+                           OnClick="@OpenCreateDialog"
+                           Color="Color.Primary"
+                           Variant="Variant.Filled">
+                    New User
+                </MudButton>
+            </MudToolBar>
+
+            <MudDataGrid Items="@users"
+                         Dense="true"
+                         Hover="true"
+                         Striped="true"
+                         Loading="@loading">
+                <Columns>
+                    <PropertyColumn Property="x => x.IsActive" Title="Status">
+                        <CellTemplate>
+                            <MudChip Color="@(context.Item.IsActive ? Color.Success : Color.Error)"
+                                     Size="Size.Small">
+                                @(context.Item.IsActive ? "Active" : "Inactive")
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Email" Title="Email" />
+                    <PropertyColumn Property="x => x.FirstName" Title="First Name" />
+                    <PropertyColumn Property="x => x.LastName" Title="Last Name" />
+                    <PropertyColumn Property="x => x.UserType" Title="User Type" />
+                    <TemplateColumn CellClass="d-flex justify-end">
+                        <CellTemplate>
+                            <MudTooltip Text="View Details">
+                                <MudIconButton Size="@Size.Small"
+                                               Icon="@Icons.Material.Outlined.Info"
+                                               OnClick="() => Info(context.Item)"
+                                               Color="Color.Info" />
+                            </MudTooltip>
+                            <MudTooltip Text="Edit">
+                                <MudIconButton Size="@Size.Small"
+                                               Icon="@Icons.Material.Outlined.Edit"
+                                               OnClick="() => OpenEditDialog(context.Item)"
+                                               Color="Color.Primary" />
+                            </MudTooltip>
+                            <MudTooltip Text="Delete">
+                                <MudIconButton Size="@Size.Small"
+                                               Icon="@Icons.Material.Outlined.Delete"
+                                               OnClick="() => DeleteUser(context.Item)"
+                                               Color="Color.Error" />
+                            </MudTooltip>
+                        </CellTemplate>
+                    </TemplateColumn>
+                </Columns>
+                <PagerContent>
+                    <MudDataGridPager T="User" />
+                </PagerContent>
+            </MudDataGrid>
+        </MudPaper>
+    }
+</MudContainer>
+
+@code {
+    private IEnumerable<User> users;
+    private bool loading = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        loading = true;
+        await LoadData();
+        loading = false;
+        StateHasChanged();
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            loading = true;
+            users = await BasePage.GetAllApiAsync<IEnumerable<User>>($"User/get-all?OrganisationId={SessionInfo.OrganisationId}");
+        }
+        catch (Exception ex)
+        {
+            await BasePage.DialogService.ShowMessageBox(
+                "Error",
+                "Failed to load data: " + ex.Message,
+                yesText: "Retry",
+                cancelText: "Close");
+        }
+        finally
+        {
+            loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task OpenCreateDialog()
+    {
+        var dialog = await BasePage.DialogService.ShowAsync<UserDialog>("New User");
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadData();
+            BasePage.Snackbar.Add("User created successfully", Severity.Success);
+        }
+    }
+
+    private async Task OpenEditDialog(User user)
+    {
+        var parameters = new DialogParameters
+        {
+            { "User", user }
+        };
+
+        var dialog = await BasePage.DialogService.ShowAsync<UserDialog>("Edit User", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadData();
+            BasePage.Snackbar.Add("User updated successfully", Severity.Success);
+        }
+    }
+
+    private async Task DeleteUser(User user)
+    {
+        var confirm = await BasePage.DialogService.ShowMessageBox(
+            "Delete Confirmation",
+            "Are you sure you want to delete this user?",
+            "Yes",
+            "No",
+            options: new DialogOptions { MaxWidth = MaxWidth.ExtraSmall });
+
+        if (confirm == true)
+        {
+            try
+            {
+                var data = new
+                {
+                    organisationId = SessionInfo.OrganisationId,
+                    id = user.Id,
+                    deletedBy = SessionInfo.UserEmail
+                };
+
+                await BasePage.DeleteApiAsync<User>("User/delete", data);
+                await LoadData();
+                BasePage.Snackbar.Add("User deleted successfully", Severity.Success);
+            }
+            catch (Exception ex)
+            {
+                BasePage.Snackbar.Add("Error deleting user: " + ex.Message, Severity.Error);
+            }
+        }
+    }
+
+    private async Task Info(User user)
+    {
+        var users = new List<User>();
+        users.Add(user);
+
+        var parameters = new DialogParameters<LogInfo> { { x => x.Entity, users } };
+
+        await BasePage.DialogService.ShowAsync<LogInfo>("Information", parameters);
+    }
+} 

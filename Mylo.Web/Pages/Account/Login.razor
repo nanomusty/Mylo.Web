@@ -1,8 +1,13 @@
 ﻿@page "/Account/Login"
 @using Mylo.Web.ObjectModels
+@using System.Text.Json
+
+@layout EmptyLayout
 
 @inject BasePage BasePage
 @inject IWebAssemblyHostEnvironment HostEnvironment
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+@inject SessionInfo SessionInfo
 
 <MudContainer MaxWidth="MaxWidth.Small" Class="d-flex align-center justify-center" Style="height: 100vh; padding: 16px;">
     <MudCard Elevation="25" Class="rounded-lg pa-4" Style="width: 100%; max-width: 500px;">
@@ -35,23 +40,23 @@
                 <DataAnnotationsValidator />
                 <MudStack Spacing="3">
                     <MudTextField @bind-Value="Input.Email"
-                                  Label="Email"
-                                  Variant="Variant.Outlined"
-                                  InputType="InputType.Email"
-                                  Adornment="Adornment.Start"
-                                  AdornmentIcon="@Icons.Material.Filled.Email"
-                                  Size="Size.Large"
-                                  Class="mt-3" />
+                    Label="Email"
+                    Variant="Variant.Outlined"
+                    InputType="InputType.Email"
+                    Adornment="Adornment.Start"
+                    AdornmentIcon="@Icons.Material.Filled.Email"
+                    Size="Size.Large"
+                    Class="mt-3" />
                     <ValidationMessage For="() => Input.Email" />
 
                     <MudTextField @bind-Value="Input.Password"
-                                  Label="Password"
-                                  Variant="Variant.Outlined"
-                                  InputType="InputType.Password"
-                                  Adornment="Adornment.Start"
-                                  AdornmentIcon="@Icons.Material.Filled.Lock"
-                                  Size="Size.Large"
-                                  Class="mt-3" />
+                    Label="Password"
+                    Variant="Variant.Outlined"
+                    InputType="InputType.Password"
+                    Adornment="Adornment.Start"
+                    AdornmentIcon="@Icons.Material.Filled.Lock"
+                    Size="Size.Large"
+                    Class="mt-3" />
                     <ValidationMessage For="() => Input.Password" />
 
                     @if (!HostEnvironment.IsDevelopment())
@@ -60,17 +65,17 @@
                             <MudText Typo="Typo.body1" Class="text-center">Please enter the captcha code</MudText>
                             <MudStack Direction="Direction.Row" Justify="Justify.Center" Spacing="2">
                                 <MudTextField @bind-Value="enteredCaptcha"
-                                              Label="Captcha"
-                                              Variant="Variant.Outlined"
-                                              InputType="InputType.Text"
-                                              Size="Size.Large"
-                                              Class="mt-3"
-                                              Style="width: 200px;" />
+                                Label="Captcha"
+                                Variant="Variant.Outlined"
+                                InputType="InputType.Text"
+                                Size="Size.Large"
+                                Class="mt-3"
+                                Style="width: 200px;" />
                                 <MudButton OnClick="GenerateNewCaptcha"
-                                           Variant="Variant.Outlined"
-                                           Color="Color.Primary"
-                                           Size="Size.Large"
-                                           Class="mt-3">
+                                Variant="Variant.Outlined"
+                                Color="Color.Primary"
+                                Size="Size.Large"
+                                Class="mt-3">
                                     <MudIcon Icon="@Icons.Material.Filled.Refresh" />
                                 </MudButton>
                             </MudStack>
@@ -79,11 +84,11 @@
                     }
 
                     <MudButton ButtonType="ButtonType.Submit"
-                               Variant="Variant.Filled"
-                               Color="Color.Primary"
-                               Size="Size.Large"
-                               FullWidth="true"
-                               Class="mt-6">
+                    Variant="Variant.Filled"
+                    Color="Color.Primary"
+                    Size="Size.Large"
+                    FullWidth="true"
+                    Class="mt-6">
                         Sign In
                     </MudButton>
                 </MudStack>
@@ -92,17 +97,17 @@
         </MudCardContent>
 
         <MudCardActions Class="d-flex justify-center pa-2">
-            @*  <MudLink OnClick="@(() => BasePage.RegisterPage())"
-                     Underline="Underline.None"
-                     Color="Color.Primary">
+            <MudLink OnClick="@(() => BasePage.RegisterPage())"
+            Underline="Underline.None"
+            Color="Color.Primary">
                 Register
-            </MudLink> *@
+            </MudLink>
 
             <MudSpacer />
 
             <MudLink Href="Account/ForgotPassword"
-                     Underline="Underline.None"
-                     Color="Color.Primary">
+            Underline="Underline.None"
+            Color="Color.Primary">
                 Forgot your password?
             </MudLink>
         </MudCardActions>
@@ -120,7 +125,7 @@
     {
         try
         {
-            //TODO: burada token alinacak.
+            await SessionInfo.ClearSession();
 
             if (!HostEnvironment.IsDevelopment())
             {
@@ -159,36 +164,34 @@
                     Password = Input.Password
                 };
 
-            //TODO: burada token ile girilen bilgiler gonderilecek.
+            var LoginResponse = await BasePage.PostApiAsync<LoginResponse>("api/Auth/login", data);
 
-            //var user = await BasePage.PostApiAsync<User>("User/check", data);
+            if (LoginResponse is not null)
+            {
+                await localStorage.SetItemAsync("authToken", LoginResponse.Token);
 
+                await SessionInfo.LoadSessionFromLocalStorage();
 
+                await SessionInfo.IsAuthenticatedAsync();
+            }
 
-            //     
+            if (!string.IsNullOrEmpty(LoginResponse?.Token))
+            {
+                //TODO: mail sending
 
-            //     if (user != null)
-            //     {
-            //         var organisation = await BasePage.PostApiAsync<Organisation>("Organisation/get", new { user.OrganisationId });
+                StateHasChanged();
 
-            //         await SetSession(user, organisation);
-
-
-            //         //TODO: mail sending
-
-            //         StateHasChanged();
-
-            //         BasePage.NavigationManager.NavigateTo("/dashboard");
-            //     }
-            //     else
-            //     {
-            //         message = "User not exist or wrong email/password";
-            //         if (!BasePage.Env.IsDevelopment())
-            //         {
-            //             GenerateNewCaptcha();
-            //         }
-            //         StateHasChanged();
-            //     }
+                BasePage.NavigationManager.NavigateTo("/dashboard");
+            }
+            else
+            {
+                message = "User not exist or wrong email/password";
+                if (!HostEnvironment.IsDevelopment())
+                {
+                    GenerateNewCaptcha();
+                }
+                StateHasChanged();
+            }
         }
 
 

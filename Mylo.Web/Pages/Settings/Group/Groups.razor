@@ -1,0 +1,187 @@
+@page "/settings/groups"
+
+@inject BasePage BasePage
+@inject SessionInfo SessionInfo
+
+@implements IDisposable
+
+<MudContainer MaxWidth="MaxWidth.False" Class="mt-4">
+    @if (loading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-7" />
+    }
+    @if (SessionInfo.OrganisationId == Guid.Empty)
+    {
+        <MudText>This page shows full content only to logged-in users. Please log in to access the full content. Membership is free.</MudText>
+        <MudLink OnClick="@(() => BasePage.RegisterPage())" Underline="Underline.None" Color="Color.Primary">
+            Register Here
+        </MudLink>
+    }
+    else if (SessionInfo.UserType == UserType.Normal)
+    {
+        <MudText>This page is not available for your user type.</MudText>
+    }
+    else
+    {
+        <MudPaper Class="pa-4">
+            <MudToolBar DisableGutters="true" Class="mb-4">
+                <MudButton StartIcon="@Icons.Material.Filled.Add"
+                OnClick="@OpenCreateDialog"
+                Color="Color.Primary"
+                Variant="Variant.Filled">
+                    New Group
+                </MudButton>
+            </MudToolBar>
+
+            <MudDataGrid T="Group" Items="@groups"
+            Dense="true"
+            Hover="true"
+            Striped="true"
+            Loading="@isLoading">
+                <Columns>
+                    <PropertyColumn Property="x => x.IsActive" Title="Status">
+                        <CellTemplate>
+                            <MudChip Color="@(context.Item.IsActive ? Color.Success : Color.Error)"
+                            Size="Size.Small">
+                                @(context.Item.IsActive ? "Active" : "Inactive")
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Name" Title="Name" />
+                    <PropertyColumn Property="x => x.Description" Title="Description" />
+                    <TemplateColumn CellClass="d-flex justify-end">
+                        <CellTemplate>
+                            <MudTooltip Text="View Details">
+                                <MudIconButton Size="@Size.Small"
+                                Icon="@Icons.Material.Outlined.Info"
+                                OnClick="() => Info(context.Item)"
+                                Color="Color.Info" />
+                            </MudTooltip>
+                            <MudTooltip Text="Edit">
+                                <MudIconButton Size="@Size.Small"
+                                Icon="@Icons.Material.Outlined.Edit"
+                                OnClick="() => OpenEditDialog(context.Item)"
+                                Color="Color.Primary" />
+                            </MudTooltip>
+                            <MudTooltip Text="Delete">
+                                <MudIconButton Size="@Size.Small"
+                                Icon="@Icons.Material.Outlined.Delete"
+                                OnClick="() => DeleteGroup(context.Item)"
+                                Color="Color.Error" />
+                            </MudTooltip>
+                        </CellTemplate>
+                    </TemplateColumn>
+                </Columns>
+                <PagerContent>
+                    <MudDataGridPager T="Group" />
+                </PagerContent>
+            </MudDataGrid>
+        </MudPaper>
+    }
+</MudContainer>
+
+@code {
+    private IEnumerable<Group> groups;
+    private bool isLoading = false;
+    private string userEmail;
+    private bool loading = true;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        loading = true;
+        await LoadData();
+        loading = false;
+        StateHasChanged();
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            isLoading = true;
+            groups = Enumerable.Empty<Group>();
+        }
+        catch (Exception ex)
+        {
+            await BasePage.DialogService.ShowMessageBox(
+                "Error",
+                "Failed to load data: " + ex.Message,
+                yesText: "Retry",
+                cancelText: "Close");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task OpenCreateDialog()
+    {
+        var dialog = await BasePage.DialogService.ShowAsync<GroupDialog>("New Group");
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadData();
+            BasePage.Snackbar.Add("Group created successfully", Severity.Success);
+        }
+    }
+
+    private async Task OpenEditDialog(Group group)
+    {
+        var parameters = new DialogParameters
+        {
+            { "Group", group }
+        };
+
+        var dialog = await BasePage.DialogService.ShowAsync<GroupDialog>("Edit Group", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadData();
+            BasePage.Snackbar.Add("Group updated successfully", Severity.Success);
+        }
+    }
+
+    private async Task DeleteGroup(Group group)
+    {
+        var confirm = await BasePage.DialogService.ShowMessageBox(
+            "Delete Confirmation",
+            "Are you sure you want to delete this group?",
+            "Yes",
+            "No",
+            options: new DialogOptions { MaxWidth = MaxWidth.ExtraSmall });
+
+        if (confirm == true)
+        {
+            try
+            {
+                //await BasePage.GroupService.DeleteAsync(group.OrganisationId, group.Id, userEmail);
+                await LoadData();
+                BasePage.Snackbar.Add("Group deleted successfully", Severity.Success);
+            }
+            catch (Exception ex)
+            {
+                BasePage.Snackbar.Add("Error deleting group: " + ex.Message, Severity.Error);
+            }
+        }
+    }
+
+    private async Task Info(Group group)
+    {
+        var groups = new List<Group>();
+        groups.Add(group);
+
+        var parameters = new DialogParameters<LogInfo> { { x => x.Entity, groups } };
+
+        await BasePage.DialogService.ShowAsync<LogInfo>("Information", parameters);
+    }
+
+    public void Dispose()
+    {
+        groups = null;
+    }
+} 

@@ -1,0 +1,92 @@
+@inject BasePage BasePage
+@inject SessionInfo SessionInfo
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(Group == null ? "New Group" : "Edit Group")</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm Model="@group" @ref="form">
+            <MudGrid>
+                <MudItem xs="12" Class="d-flex justify-end">
+                    <MudSwitch T="bool"
+                               Color="Color.Primary"
+                               Label="Is Active"
+                               @bind-Value="group.IsActive" />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="group.Name"
+                                  Label="Name"
+                                  Required="true" />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="group.Description"
+                                  Label="Description"
+                                  Lines="3" />
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public Group? Group { get; set; }
+
+    private Group group = new();
+    private MudForm? form;
+    private Guid organisationId = Guid.Empty;
+    private string userEmail = string.Empty;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        // organisationId = await BasePage.SessionService.GetOrganisationIdAsync();
+        // userEmail = await BasePage.SessionService.GetUserEmailAsync();
+        // if (Group != null)
+        // {
+        //     group = new Group
+        //         {
+        //             Id = Group.Id,
+        //             IsActive = Group.IsActive,
+        //             Name = Group.Name,
+        //             Description = Group.Description,
+        //             OrganisationId = organisationId
+        //         };
+        // }
+        // else
+        // {
+        //     group.OrganisationId = organisationId;
+        //     group.IsActive = true;
+        // }
+
+        StateHasChanged();
+    }
+
+    private async Task Submit()
+    {
+        await form.Validate();
+        // if (form.IsValid)
+        // {
+        //     if (Group == null)
+        //     {
+        //         group.CreatedBy = userEmail;
+        //         await BasePage.GroupService.InsertAsync(group);
+        //     }
+        //     else
+        //     {
+        //         group.ModifiedBy = userEmail;
+        //         await BasePage.GroupService.UpdateAsync(group);
+        //     }
+            MudDialog.Close(DialogResult.Ok(true));
+        // }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+} 

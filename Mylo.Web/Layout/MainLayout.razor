@@ -3,6 +3,7 @@
 @inject HttpClient Http
 @inject NavigationManager Navigation
 @inject BasePage BasePage
+@inject SessionInfo SessionInfo
 
 @inject IWebAssemblyHostEnvironment HostEnvironment
 
@@ -28,13 +29,15 @@
             </MudText>
         }
         <MudSpacer />
-        @if (userId != Guid.Empty)
+        @if (isAuthenticated)
         {
             <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Dense="true">
                 <ActivatorContent>
                     <MudStack Row="true" Spacing="2" Class="pa-1" AlignItems="AlignItems.Center">
                         <MudAvatar Color="Color.Info" Size="Size.Medium">
-                            @(string.IsNullOrEmpty(userEmail) ? "U" : userEmail[0].ToString().ToUpper())
+                            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
+                                <path d="M234-276q51-39 114-61.5T480-360q69 0 132 22.5T726-276q35-41 54.5-93T800-480q0-133-93.5-226.5T480-800q-133 0-226.5 93.5T160-480q0 59 19.5 111t54.5 93Zm246-164q-59 0-99.5-40.5T340-580q0-59 40.5-99.5T480-720q59 0 99.5 40.5T620-580q0 59-40.5 99.5T480-440Zm0 360q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q53 0 100-15.5t86-44.5q-39-29-86-44.5T480-280q-53 0-100 15.5T294-220q39 29 86 44.5T480-160Zm0-360q26 0 43-17t17-43q0-26-17-43t-43-17q-26 0-43 17t-17 43q0 26 17 43t43 17Zm0-60Zm0 360Z" />
+                            </svg>
                         </MudAvatar>
                         <MudIcon Icon="@Icons.Material.Filled.ArrowDropDown" Class="ml-1" Style="transform: translateY(-1px);" />
                     </MudStack>
@@ -52,57 +55,63 @@
         }
         else
         {
-            <MudButton Href="https://mylolaw.work/Account/Register" StartIcon="@Icons.Material.Filled.Key" Color="Color.Inherit" Class="ml-3"
-                       Disabled="organisationId != Guid.Empty">Register</MudButton>
+            <MudButton Href="/Account/Register" StartIcon="@Icons.Material.Filled.Key" Color="Color.Inherit" Class="ml-3">Register</MudButton>
             <MudButton Href="Account/Login" StartIcon="@Icons.Material.Filled.Login" Color="Color.Inherit" Class="ml-3">Login</MudButton>
         }
     </MudAppBar>
 
     <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
-
-        @* <MudPaper Class="d-inline-flex py-3" Elevation="0">
+        @if (!isAuthenticated)
+        {
             <MudNavMenu Class="mud-width-full" Color="Color.Info">
-                <MudNavLink Href="dashboard" Icon="@Icons.Material.Filled.Dashboard">Dashboard</MudNavLink>
-                <MudDivider />
-                <MudNavGroup Title="Management" Icon="@Icons.Material.Filled.ManageAccounts">
-                    <MudNavLink Href="/management/organisations" Icon="@Icons.Material.Filled.Apartment">Organisations</MudNavLink>
-                    <MudNavLink Href="/management/feedbacks" Icon="@Icons.Material.Filled.Feedback">Feedbacks</MudNavLink>
-                    <MudNavLink Href="/management/contacts" Icon="@Icons.Material.Filled.ContactMail">Contacts</MudNavLink>
-                    <MudNavLink Href="/management/release-notes" Icon="@Icons.Material.Filled.NewReleases">Release Note</MudNavLink>
-
-                </MudNavGroup>
-                <MudDivider />
-                <MudNavGroup Title="Settings" Icon="@Icons.Material.Filled.Settings">
-                    <MudNavLink Href="/settings/users" Icon="@Icons.Material.Filled.Person">Users</MudNavLink>
-                    <MudNavLink Href="/settings/groups" Icon="@Icons.Material.Filled.Groups">Groups</MudNavLink>
-                </MudNavGroup>
-                <MudNavGroup Title="File" Icon="@Icons.Material.Filled.Folder">
-                    <MudNavLink Href="/file/clients" Icon="@Icons.Material.Filled.Contacts">Clients</MudNavLink>
-                    <MudNavLink Href="/file/debtors" Icon="@Icons.Material.Filled.Person">Debtors</MudNavLink>
-                    <MudNavLink Href="/file/cases" Icon="@Icons.Material.Filled.List">Cases</MudNavLink>
-                    <MudNavLink Href="/file/meetings" Icon="@Icons.Material.Filled.Notes">Meetings</MudNavLink>
-                </MudNavGroup>
-                <MudNavGroup Title="Cost Management" Icon="@Icons.Material.Filled.Payments">
-                    <MudNavLink Href="/cost-management/expenses" Icon="@Icons.Material.Filled.Money">Expenses</MudNavLink>
-                </MudNavGroup>
-                <MudNavGroup Title="Collections" Icon="@Icons.Material.Filled.Payment">
-                    <MudNavLink Href="/collection-management/collections" Icon="@Icons.Material.Filled.Paid">Collections</MudNavLink>
-                </MudNavGroup>
-                <MudNavGroup Title="Asset Management" Icon="@Icons.Material.Filled.Analytics">
-                    <MudNavLink Href="/asset-management/fixture" Icon="@Icons.Custom.Brands.Microsoft">Fixture</MudNavLink>
-                </MudNavGroup>
-                <MudNavGroup Title="Tools" Icon="@Icons.Material.Filled.Handyman">
-                    <MudNavLink Href="/tools/contacts" Icon="@Icons.Material.Filled.Contacts">Contact Cards</MudNavLink>
-                </MudNavGroup>
-                <MudDivider />
+                <MudNavLink Href="Account/Login" Icon="@Icons.Material.Filled.Login">Login</MudNavLink>
             </MudNavMenu>
-        </MudPaper> *@
+        }
+        else
+        {
+            <MudPaper Class="d-inline-flex py-3" Elevation="0">
+                <MudNavMenu Class="mud-width-full" Color="Color.Info">
+                    <MudNavLink Href="dashboard" Icon="@Icons.Material.Filled.Dashboard">Dashboard</MudNavLink>
+                    <MudDivider />
+                    @if (SessionInfo.UserType == Enumerations.UserType.SuperAdministrator)
+                    {
+                        <MudNavGroup Title="Management" Icon="@Icons.Material.Filled.ManageAccounts">
+                            <MudNavLink Href="/management/organisations" Icon="@Icons.Material.Filled.Apartment">Organisations</MudNavLink>
+                            <MudNavLink Href="/management/feedbacks" Icon="@Icons.Material.Filled.Feedback">Feedbacks</MudNavLink>
+                            <MudNavLink Href="/management/contacts" Icon="@Icons.Material.Filled.ContactMail">Contacts</MudNavLink>
+                            <MudNavLink Href="/management/release-notes" Icon="@Icons.Material.Filled.NewReleases">Release Note</MudNavLink>
+                        </MudNavGroup>
+                    }
+                    @if (SessionInfo.UserType > Enumerations.UserType.Normal)
+                    {
+                        <MudNavGroup Title="Settings" Icon="@Icons.Material.Filled.Settings">
+                            <MudNavLink Href="/settings/users" Icon="@Icons.Material.Filled.Person">Users</MudNavLink>
+                            <MudNavLink Href="/settings/groups" Icon="@Icons.Material.Filled.Groups">Groups</MudNavLink>
+                        </MudNavGroup>
+                    }
+                    <MudNavGroup Title="File" Icon="@Icons.Material.Filled.Folder">
+                        <MudNavLink Href="/file/clients" Icon="@Icons.Material.Filled.Contacts">Clients</MudNavLink>
+                        <MudNavLink Href="/file/debtors" Icon="@Icons.Material.Filled.Person">Debtors</MudNavLink>
+                        <MudNavLink Href="/file/cases" Icon="@Icons.Material.Filled.List">Cases</MudNavLink>
+                        <MudNavLink Href="/file/meetings" Icon="@Icons.Material.Filled.Notes">Meetings</MudNavLink>
+                    </MudNavGroup>
+                    <MudNavGroup Title="Cost Management" Icon="@Icons.Material.Filled.Payments">
+                        <MudNavLink Href="/cost-management/expenses" Icon="@Icons.Material.Filled.Money">Expenses</MudNavLink>
+                    </MudNavGroup>
+                    <MudNavGroup Title="Collections" Icon="@Icons.Material.Filled.Payment">
+                        <MudNavLink Href="/collection-management/collections" Icon="@Icons.Material.Filled.Paid">Collections</MudNavLink>
+                    </MudNavGroup>
+                    <MudNavGroup Title="Asset Management" Icon="@Icons.Material.Filled.Analytics">
+                        <MudNavLink Href="/asset-management/fixture" Icon="@Icons.Custom.Brands.Microsoft">Fixture</MudNavLink>
+                    </MudNavGroup>
+                    <MudNavGroup Title="Tools" Icon="@Icons.Material.Filled.Handyman">
+                        <MudNavLink Href="/tools/contacts" Icon="@Icons.Material.Filled.Contacts">Contact Cards</MudNavLink>
+                    </MudNavGroup>
+                    <MudDivider />
+                </MudNavMenu>
+            </MudPaper>
+        }
 
-        <MudDivider DividerType="DividerType.Middle" />
-
-        <MudNavMenu Class="mud-width-full" Color="Color.Info">
-            <MudNavLink Href="Account/Login" Icon="@Icons.Material.Filled.Login">Login</MudNavLink>
-        </MudNavMenu>
 
         @* burada amazon affiliate linkleri kullanilacak. hukuk kitaplari icin *@
 
@@ -129,36 +138,18 @@
         @Body
         <br />
     </MudMainContent>
-
-@*     <MudPaper Elevation="4" Square="true" Style="height: 30px; position: fixed; bottom: 0; width: 100%">
-        <MudContainer Class="d-flex justify-center align-center">
-            <MudLink Href="https://donate.stripe.com/cN23fN0MQdX4cmI9AA" Target="_blank">
-                <MudButton Variant="Variant.Filled" Color="Color.Secondary">
-                    ☕ Support Mylo
-                </MudButton>
-            </MudLink>
-        </MudContainer>
-    </MudPaper> *@
 </MudLayout>
 
 @code {
     bool _drawerOpen = true;
-    string previewUrl;
-    PreviewResult preview;
-    // UserType userType;
-    Guid organisationId;
-    Guid userId;
-    string userEmail;
-    // PriceTier priceTier;
+    // string previewUrl;
+    // PreviewResult preview;
+    private bool isAuthenticated;
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnInitializedAsync()
     {
-        if (!firstRender) return;
-        // userEmail = await BasePage.SessionService.GetUserEmailAsync();
-        // userId = await BasePage.SessionService.GetUserIdAsync();
-        // organisationId = await BasePage.SessionService.GetOrganisationIdAsync();
-        // userType = await BasePage.SessionService.GetUserTypeAsync();
-
+        await SessionInfo.LoadSessionFromLocalStorage();
+        isAuthenticated = await SessionInfo.IsAuthenticatedAsync();
         StateHasChanged();
     }
 
@@ -175,11 +166,9 @@
 
     private async Task Logout()
     {
-        // await BasePage.SessionService.ClearSessionAsync();
-
-        // BasePage.NavigationManager.NavigateTo("/Account/Login", true);
-
-        await Task.CompletedTask;
+        await SessionInfo.ClearSession();
+        BasePage.NavigationManager.NavigateTo("/Account/Login", true);
+        StateHasChanged();
     }
 
     public class PreviewResult
@@ -190,21 +179,21 @@
         public string url { get; set; }
     }
 
-    private async Task GetPreview()
-    {
-        if (string.IsNullOrWhiteSpace(previewUrl))
-            return;
+    // private async Task GetPreview()
+    // {
+    //     if (string.IsNullOrWhiteSpace(previewUrl))
+    //         return;
 
-        try
-        {
-            string apiKey = "322044163827071bd4742a9e1447c5eb";
-            var requestUrl = $"https://api.linkpreview.net/?key={apiKey}&q={Uri.EscapeDataString(previewUrl)}";
+    //     try
+    //     {
+    //         string apiKey = "322044163827071bd4742a9e1447c5eb";
+    //         var requestUrl = $"https://api.linkpreview.net/?key={apiKey}&q={Uri.EscapeDataString(previewUrl)}";
 
-            preview = await Http.GetFromJsonAsync<PreviewResult>(requestUrl);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Önizleme hatası: {ex.Message}");
-        }
-    }
+    //         preview = await Http.GetFromJsonAsync<PreviewResult>(requestUrl);
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         Console.WriteLine($"Önizleme hatası: {ex.Message}");
+    //     }
+    // }
 }
