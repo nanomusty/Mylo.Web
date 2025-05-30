@@ -3,8 +3,6 @@
 @inject BasePage BasePage
 @inject SessionInfo SessionInfo
 
-@implements IDisposable
-
 <MudContainer MaxWidth="MaxWidth.False" Class="mt-4">
     @if (loading)
     {
@@ -86,34 +84,22 @@
     private string userEmail;
     private bool loading = true;
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnInitializedAsync()
     {
-        if (!firstRender) return;
         loading = true;
         await LoadData();
         loading = false;
-        StateHasChanged();
     }
 
     private async Task LoadData()
     {
         try
         {
-            isLoading = true;
             groups = Enumerable.Empty<Group>();
         }
         catch (Exception ex)
         {
-            await BasePage.DialogService.ShowMessageBox(
-                "Error",
-                "Failed to load data: " + ex.Message,
-                yesText: "Retry",
-                cancelText: "Close");
-        }
-        finally
-        {
-            isLoading = false;
-            StateHasChanged();
+            BasePage.Snackbar.Add($"An error occurred: {ex.Message}", Severity.Error);
         }
     }
 
@@ -165,7 +151,7 @@
             }
             catch (Exception ex)
             {
-                BasePage.Snackbar.Add("Error deleting group: " + ex.Message, Severity.Error);
+                BasePage.Snackbar.Add($"An error occurred: {ex.Message}", Severity.Error);
             }
         }
     }
@@ -178,10 +164,5 @@
         var parameters = new DialogParameters<LogInfo> { { x => x.Entity, groups } };
 
         await BasePage.DialogService.ShowAsync<LogInfo>("Information", parameters);
-    }
-
-    public void Dispose()
-    {
-        groups = null;
     }
 } 
