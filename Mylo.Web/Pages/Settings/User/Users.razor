@@ -129,6 +129,9 @@
 
         if (!result.Canceled)
         {
+            if (SessionInfo.UserEmail == "demo@mylolaw.work")
+                return;
+
             await LoadData();
             BasePage.Snackbar.Add("User updated successfully", Severity.Success);
         }

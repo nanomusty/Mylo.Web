@@ -66,12 +66,14 @@
                                     <MudIconButton Size="@Size.Small"
                                                    Icon="@Icons.Material.Outlined.Edit"
                                                    OnClick="() => OpenEditDialog(context.Item)"
+                                                   Disabled="SessionInfo.UserType < UserType.Administrator"
                                                    Color="Color.Primary" />
                                 </MudTooltip>
                                 <MudTooltip Text="Delete">
                                     <MudIconButton Size="@Size.Small"
                                                    Icon="@Icons.Material.Outlined.Delete"
                                                    OnClick="() => DeleteContact(context.Item)"
+                                                   Disabled="SessionInfo.UserType < UserType.Administrator"
                                                    Color="Color.Error" />
                                 </MudTooltip>
                             </CellTemplate>

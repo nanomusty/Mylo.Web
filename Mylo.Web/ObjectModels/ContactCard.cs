@@ -1,10 +1,14 @@
-﻿namespace Mylo.Web.ObjectModels
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Mylo.Web.ObjectModels
 {
     public class ContactCard : BaseEntity
     {
         public Guid OrganisationId { get; set; }
         public string? FirstName { get; set; }
         public string? LastName { get; set; }
+
+        [EmailAddress]
         public string? Email { get; set; }
         public string? PhoneNumber { get; set; }
         public string? Company { get; set; }

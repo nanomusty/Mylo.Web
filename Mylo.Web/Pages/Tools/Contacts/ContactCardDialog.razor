@@ -1,4 +1,5 @@
 ﻿@inject BasePage BasePage
+@inject SessionInfo SessionInfo
 
 <MudDialog>
     <TitleContent>@(isEditMode ? "Edit Contact" : "New Contact")</TitleContent>
@@ -11,6 +12,8 @@
             <MudTextField @bind-Value="model.Company" Label="Company" />
             <MudTextField @bind-Value="model.JobTitle" Label="Job Title" />
             <MudTextField @bind-Value="model.Address" Label="Address" />
+            <MudTextField @bind-Value="model.Website" Label="Website" />
+            <MudTextField @bind-Value="model.ProfileImageUrl" Label="Profile Image URL" />
             <MudTextField @bind-Value="model.Notes" Label="Notes" />
         </MudForm>
     </DialogContent>
@@ -22,12 +25,11 @@
 
 @code {
     [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
-    [Parameter] public ContactCard? ContactCard { get; set; }
+    [Parameter] public ContactCard ContactCard { get; set; }
 
     private ContactCard model = new();
     private MudForm form;
     private bool isEditMode => ContactCard is not null;
-    Guid organisationId;
 
     protected override async Task OnInitializedAsync()
     {
@@ -44,12 +46,14 @@
                     Company = ContactCard.Company,
                     JobTitle = ContactCard.JobTitle,
                     Address = ContactCard.Address,
+                    Website = ContactCard.Website,
+                    IsActive = ContactCard.IsActive,
                     Notes = ContactCard.Notes
                 };
         }
         else
         {
-            model.OrganisationId = organisationId;
+            model.OrganisationId = SessionInfo.OrganisationId;
         }
 
         await Task.CompletedTask;
@@ -66,13 +70,13 @@
         {
             if (isEditMode)
             {
-                //await BasePage.ContactCardService.UpdateAsync(model);
-                BasePage.Snackbar.Add("Contact updated successfully", Severity.Success);
+                model.ModifiedBy = SessionInfo.UserEmail;
+                await BasePage.UpdateApiAsync<ContactCard>("ContactCard/update", model);
             }
             else
             {
-                //await BasePage.ContactCardService.AddAsync(model);
-                BasePage.Snackbar.Add("Contact added successfully", Severity.Success);
+                model.CreatedBy = SessionInfo.UserEmail;
+                await BasePage.InsertApiAsync<ContactCard>("ContactCard/insert", model);
             }
 
             MudDialog.Close(DialogResult.Ok(true));
