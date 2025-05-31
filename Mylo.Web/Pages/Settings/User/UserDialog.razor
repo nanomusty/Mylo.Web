@@ -107,7 +107,6 @@
         {
             user.OrganisationId = SessionInfo.OrganisationId;
             user.IsActive = true;
-            user.UserType = SessionInfo.UserType;
         }
         await Task.CompletedTask;
         StateHasChanged();

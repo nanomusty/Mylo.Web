@@ -1,0 +1,90 @@
+﻿@inject BasePage BasePage
+
+<MudDialog>
+    <TitleContent>@(isEditMode ? "Edit Contact" : "New Contact")</TitleContent>
+    <DialogContent>
+        <MudForm @ref="form">
+            <MudTextField @bind-Value="model.FirstName" Label="First Name" Required="true" />
+            <MudTextField @bind-Value="model.LastName" Label="Last Name" Required="true" />
+            <MudTextField @bind-Value="model.Email" Label="Email" Required="true" />
+            <MudTextField @bind-Value="model.PhoneNumber" Label="Phone Number" />
+            <MudTextField @bind-Value="model.Company" Label="Company" />
+            <MudTextField @bind-Value="model.JobTitle" Label="Job Title" />
+            <MudTextField @bind-Value="model.Address" Label="Address" />
+            <MudTextField @bind-Value="model.Notes" Label="Notes" />
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="SaveAsync" Color="Color.Primary">Save</MudButton>
+        <MudButton OnClick="Cancel" Color="Color.Secondary">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
+    [Parameter] public ContactCard? ContactCard { get; set; }
+
+    private ContactCard model = new();
+    private MudForm form;
+    private bool isEditMode => ContactCard is not null;
+    Guid organisationId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (ContactCard is not null)
+        {
+            model = new ContactCard
+                {
+                    Id = ContactCard.Id,
+                    OrganisationId = ContactCard.OrganisationId,
+                    FirstName = ContactCard.FirstName,
+                    LastName = ContactCard.LastName,
+                    Email = ContactCard.Email,
+                    PhoneNumber = ContactCard.PhoneNumber,
+                    Company = ContactCard.Company,
+                    JobTitle = ContactCard.JobTitle,
+                    Address = ContactCard.Address,
+                    Notes = ContactCard.Notes
+                };
+        }
+        else
+        {
+            model.OrganisationId = organisationId;
+        }
+
+        await Task.CompletedTask;
+    }
+
+    private async Task SaveAsync()
+    {
+        await form.Validate();
+
+        if (!form.IsValid)
+            return;
+
+        try
+        {
+            if (isEditMode)
+            {
+                //await BasePage.ContactCardService.UpdateAsync(model);
+                BasePage.Snackbar.Add("Contact updated successfully", Severity.Success);
+            }
+            else
+            {
+                //await BasePage.ContactCardService.AddAsync(model);
+                BasePage.Snackbar.Add("Contact added successfully", Severity.Success);
+            }
+
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            BasePage.Snackbar.Add($"Error saving contact: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+}

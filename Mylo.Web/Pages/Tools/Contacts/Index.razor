@@ -1,0 +1,183 @@
+﻿@page "/tools/contacts"
+
+@inject BasePage BasePage
+@inject SessionInfo SessionInfo
+
+<MudContainer MaxWidth="MaxWidth.False" Class="mt-4">
+    @if (loading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-7" />
+    }
+    @if (SessionInfo.OrganisationId == Guid.Empty)
+    {
+        <MudText>This page shows full content only to logged-in users. Please log in to access the full content. Membership is free.</MudText>
+        <MudLink OnClick="@(() => BasePage.RegisterPage())" Underline="Underline.None" Color="Color.Primary">
+            Register Here
+        </MudLink>
+    }
+    else
+    {
+        <MudPaper Class="pa-4">
+            <MudToolBar DisableGutters="true" Class="mb-4">
+                <MudButton StartIcon="@Icons.Material.Filled.Add"
+                OnClick="@OpenCreateDialog"
+                Color="Color.Primary" Disabled="SessionInfo.UserType < UserType.Administrator"
+                Variant="Variant.Filled">
+                    New Contact
+                </MudButton>
+            </MudToolBar>
+            @if (loading)
+            {
+                <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+            }
+            else if (contactCards?.Any() == true)
+            {
+                <MudDataGrid T="ContactCard"
+                             Items="contactCards"
+                             Filterable="true"
+                             Sortable="true"
+                             Hover="true"
+                             Bordered="true"
+                             Dense="true"
+                             Elevation="1"
+                             Breakpoint="Breakpoint.Sm">
+                    <Columns>
+                        <PropertyColumn Property="x => x.IsActive" Title="Status">
+                            <CellTemplate>
+                                <MudChip Color="@(context.Item.IsActive ? Color.Success : Color.Error)"
+                                         Size="Size.Small">
+                                    @(context.Item.IsActive ? "Active" : "Inactive")
+                                </MudChip>
+                            </CellTemplate>
+                        </PropertyColumn>
+                        <PropertyColumn Property="x => x.FirstName" Title="First Name" />
+                        <PropertyColumn Property="x => x.LastName" Title="Last Name" />
+                        <PropertyColumn Property="x => x.Email" Title="Email" />
+                        <PropertyColumn Property="x => x.Company" Title="Company" />
+                        <TemplateColumn CellClass="d-flex justify-end">
+                            <CellTemplate>
+                                <MudTooltip Text="View Details">
+                                    <MudIconButton Size="@Size.Small"
+                                                   Icon="@Icons.Material.Outlined.Info"
+                                                   OnClick="() => Info(context.Item)"
+                                                   Color="Color.Info" />
+                                </MudTooltip>
+                                <MudTooltip Text="Edit">
+                                    <MudIconButton Size="@Size.Small"
+                                                   Icon="@Icons.Material.Outlined.Edit"
+                                                   OnClick="() => OpenEditDialog(context.Item)"
+                                                   Color="Color.Primary" />
+                                </MudTooltip>
+                                <MudTooltip Text="Delete">
+                                    <MudIconButton Size="@Size.Small"
+                                                   Icon="@Icons.Material.Outlined.Delete"
+                                                   OnClick="() => DeleteContact(context.Item)"
+                                                   Color="Color.Error" />
+                                </MudTooltip>
+                            </CellTemplate>
+                        </TemplateColumn>
+                    </Columns>
+                </MudDataGrid>
+            }
+            else
+            {
+                <MudText>No contacts found.</MudText>
+            }
+        </MudPaper>
+    }
+</MudContainer>
+
+@code {
+    private IEnumerable<ContactCard> contactCards;
+    private string searchTerm = string.Empty;
+    private Guid organisationId = Guid.Empty;
+    string userEmail = string.Empty;
+    private bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        loading = true;
+        await LoadData();
+        loading = false;
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {            
+            contactCards = await BasePage.GetAllApiAsync<IEnumerable<ContactCard>>($"ContactCard/get-all?organisationId={SessionInfo.OrganisationId}");
+        }
+        catch (Exception ex)
+        {
+            BasePage.Snackbar.Add($"An error occurred: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task OpenCreateDialog()
+    {
+        var dialog = await BasePage.DialogService.ShowAsync<ContactCardDialog>("New Contact");
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadData();
+            BasePage.Snackbar.Add("Contact created successfully", Severity.Success);
+        }
+    }
+
+    private async Task OpenEditDialog(ContactCard contact)
+    {
+        var parameters = new DialogParameters
+        {
+            { "ContactCard", contact }
+        };
+
+        var dialog = await BasePage.DialogService.ShowAsync<ContactCardDialog>("Edit Contact", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadData();
+            BasePage.Snackbar.Add("Contact updated successfully", Severity.Success);
+        }
+    }
+
+    private async Task DeleteContact(ContactCard contact)
+    {
+        var confirm = await BasePage.DialogService.ShowMessageBox(
+            "Delete Confirmation",
+            $"Are you sure you want to delete {contact.FirstName} {contact.LastName}?",
+            "Yes", "No");
+
+        if (confirm == true)
+        {
+            try
+            {
+                var data = new
+                {
+                    organisationId = SessionInfo.OrganisationId,
+                    id = contact.Id,
+                    deletedBy = SessionInfo.UserEmail
+                };
+
+                await BasePage.DeleteApiAsync<ContactCard>("ContactCard/delete", data);
+                await LoadData();
+                BasePage.Snackbar.Add("Contact deleted successfully", Severity.Success);
+            }
+            catch (Exception ex)
+            {
+                BasePage.Snackbar.Add($"An error occurred: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private async Task Info(ContactCard contactCard)
+    {
+        var list = new List<ContactCard>();
+        list.Add(contactCard);
+
+        var parameters = new DialogParameters<LogInfo> { { x => x.Entity, list } };
+
+        await BasePage.DialogService.ShowAsync<LogInfo>("Information", parameters);
+    }
+}

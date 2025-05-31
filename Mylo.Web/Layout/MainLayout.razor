@@ -7,14 +7,16 @@
 
 @inject IWebAssemblyHostEnvironment HostEnvironment
 
-@* Required *@
 <MudThemeProvider />
 <MudPopoverProvider />
-
-@* Needed for dialogs *@
-<MudDialogProvider />
-
-@* Needed for snackbars *@
+<MudDialogProvider FullWidth="true"
+                   MaxWidth="MaxWidth.Medium"
+                   CloseButton="true"
+                   BackdropClick="false"
+                   NoHeader="true"
+                   Position="DialogPosition.Center"
+                   CloseOnEscapeKey="true"
+                   BackgroundClass="my-custom-class" />
 <MudSnackbarProvider />
 
 <MudLayout>
