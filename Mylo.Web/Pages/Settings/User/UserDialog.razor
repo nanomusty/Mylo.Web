@@ -13,7 +13,7 @@
                     <MudSwitch T="bool"
                     Color="Color.Primary"
                     Label="Is Active"
-                    @bind-Value="user.IsActive" />
+                    @bind-Value="user.IsActive" Disabled="@Disabled" />
                 </MudItem>
 
                 <MudItem xs="12" sm="6">
@@ -86,7 +86,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // organisations = (await BasePage.OrganisationService.GetAllAsync()).ToList();
         organisations = new List<Organisation>();
 
         if (User != null)
@@ -120,14 +119,19 @@
             if (User == null) // insert
             {
                 user.CreatedBy = SessionInfo.UserEmail;
-
-                user.Password = user.Password;
                 await BasePage.InsertApiAsync<User>("User/insert", user);
             }
             else
             {
-                user.ModifiedBy = SessionInfo.UserEmail;
-                await BasePage.UpdateApiAsync<User>("User/update", user);
+                if (SessionInfo.UserEmail == "demo@mylolaw.work")
+                {
+                    BasePage.Snackbar.Add("Demo user cannot be updated. You do not have permission!", Severity.Warning);
+                }
+                else
+                {
+                    user.ModifiedBy = SessionInfo.UserEmail;
+                    await BasePage.UpdateApiAsync<User>("User/update", user);
+                }
             }
             MudDialog.Close(DialogResult.Ok(true));
         }

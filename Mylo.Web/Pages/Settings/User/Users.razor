@@ -154,9 +154,17 @@
                     deletedBy = SessionInfo.UserEmail
                 };
 
-                await BasePage.DeleteApiAsync<User>("User/delete", data);
-                await LoadData();
-                BasePage.Snackbar.Add("User deleted successfully", Severity.Success);
+                if (SessionInfo.UserEmail == "demo@mylolaw.work")
+                {
+                    BasePage.Snackbar.Add("Demo user cannot be deleted. You do not have permission!", Severity.Warning);                    
+                }
+                else
+                {
+                    BasePage.Snackbar.Add("User deleted successfully", Severity.Success);
+                    await BasePage.DeleteApiAsync<User>("User/delete", data);
+                    await LoadData();
+                    
+                }
             }
             catch (Exception ex)
             {
