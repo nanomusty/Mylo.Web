@@ -71,11 +71,13 @@
             if (isEditMode)
             {
                 model.ModifiedBy = SessionInfo.UserEmail;
+
                 await BasePage.UpdateApiAsync<ContactCard>("ContactCard/update", model);
             }
             else
             {
                 model.CreatedBy = SessionInfo.UserEmail;
+
                 await BasePage.InsertApiAsync<ContactCard>("ContactCard/insert", model);
             }
 
