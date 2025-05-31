@@ -5,11 +5,10 @@
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>
-		
 		<BlazorWebAssemblyLoadAllGlobalizationData>false</BlazorWebAssemblyLoadAllGlobalizationData>
 		<PublishTrimmed>true</PublishTrimmed>
-		<PublishReadyToRun>true</PublishReadyToRun>
-		<InvariantGlobalization>true</InvariantGlobalization>
+		<PublishReadyToRun>false</PublishReadyToRun>
+		<InvariantGlobalization>true</InvariantGlobalization>		
 	</PropertyGroup>
 
 	<ItemGroup>
