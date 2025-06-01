@@ -9,6 +9,8 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
+builder.Logging.SetMinimumLevel(LogLevel.Warning);
+
 builder.Services.AddScoped<BasePage>();
 builder.Services.AddScoped<SessionInfo>();
 builder.Services.AddHttpClient("Wasm", client =>
