@@ -86,7 +86,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        organisations = new List<Organisation>();
+        organisations = await BasePage.GetAllApiAsync<List<Organisation>>("Organisation/get-all");
 
         if (User != null)
         {
@@ -107,7 +107,6 @@
             user.OrganisationId = SessionInfo.OrganisationId;
             user.IsActive = true;
         }
-        await Task.CompletedTask;
         StateHasChanged();
     }
 

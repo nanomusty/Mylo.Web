@@ -97,17 +97,23 @@
                         <MudNavLink Href="/file/cases" Icon="@Icons.Material.Filled.List">Cases</MudNavLink>
                         <MudNavLink Href="/file/meetings" Icon="@Icons.Material.Filled.Notes">Meetings</MudNavLink>
                     </MudNavGroup>
-                    <MudNavGroup Title="Cost Management" Icon="@Icons.Material.Filled.Payments">
-                        <MudNavLink Href="/cost-management/expenses" Icon="@Icons.Material.Filled.Money">Expenses</MudNavLink>
-                    </MudNavGroup>
-                    @if (SessionInfo.PriceTier > PriceTier.Free)
+                    @if (SessionInfo.PriceTier > PriceTier.Free) @* Basic, Standart, Premium, Ultimate*@
                     {
+                        <MudNavGroup Title="Cost Management" Icon="@Icons.Material.Filled.Payments">
+                            <MudNavLink Href="/cost-management/expenses" Icon="@Icons.Material.Filled.Money">Expenses</MudNavLink>
+                        </MudNavGroup>
                         <MudNavGroup Title="Collections" Icon="@Icons.Material.Filled.Payment">
                             <MudNavLink Href="/collection-management/collections" Icon="@Icons.Material.Filled.Paid">Collections</MudNavLink>
                         </MudNavGroup>
+                    }
+                    @if (SessionInfo.PriceTier > PriceTier.Basic) @* Standart, Premium, Ultimate*@
+                    {
                         <MudNavGroup Title="Asset Management" Icon="@Icons.Material.Filled.Analytics">
                             <MudNavLink Href="/asset-management/fixture" Icon="@Icons.Custom.Brands.Microsoft">Fixture</MudNavLink>
                         </MudNavGroup>
+                    }
+                    @if (SessionInfo.PriceTier > PriceTier.Free) @* Basic, Standart, Premium, Ultimate*@
+                    {
                         <MudNavGroup Title="Reporting" Icon="@Icons.Material.Filled.Report">
                             <MudNavLink Href="#" Icon="@Icons.Material.Filled.ReportOff">Report</MudNavLink>
                         </MudNavGroup>
