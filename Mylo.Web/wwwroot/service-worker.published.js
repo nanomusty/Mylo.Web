@@ -7,10 +7,7 @@ self.addEventListener('activate', event => {
     console.log('Service Worker activating.');
 });
 
+// Fetch event'i sadece ağdan yanıt versin (cache yok!)
 self.addEventListener('fetch', event => {
-    event.respondWith(
-        caches.match(event.request).then(response => {
-            return response || fetch(event.request);
-        })
-    );
+    event.respondWith(fetch(event.request));
 });
