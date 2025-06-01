@@ -10,21 +10,21 @@
             <MudGrid>
                 <MudItem xs="12" Class="d-flex justify-end">
                     <MudSwitch T="bool"
-                               Color="Color.Primary"
-                               Label="Is Active"
-                               @bind-Value="group.IsActive" />
+                    Color="Color.Primary"
+                    Label="Is Active"
+                    @bind-Value="group.IsActive" />
                 </MudItem>
 
                 <MudItem xs="12">
                     <MudTextField @bind-Value="group.Name"
-                                  Label="Name"
-                                  Required="true" />
+                    Label="Name"
+                    Required="true" />
                 </MudItem>
 
                 <MudItem xs="12">
                     <MudTextField @bind-Value="group.Description"
-                                  Label="Description"
-                                  Lines="3" />
+                    Label="Description"
+                    Lines="3" />
                 </MudItem>
             </MudGrid>
         </MudForm>
@@ -41,51 +41,46 @@
 
     private Group group = new();
     private MudForm? form;
-    private Guid organisationId = Guid.Empty;
-    private string userEmail = string.Empty;
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnInitializedAsync()
     {
-        if (!firstRender) return;
-        // organisationId = await BasePage.SessionService.GetOrganisationIdAsync();
-        // userEmail = await BasePage.SessionService.GetUserEmailAsync();
-        // if (Group != null)
-        // {
-        //     group = new Group
-        //         {
-        //             Id = Group.Id,
-        //             IsActive = Group.IsActive,
-        //             Name = Group.Name,
-        //             Description = Group.Description,
-        //             OrganisationId = organisationId
-        //         };
-        // }
-        // else
-        // {
-        //     group.OrganisationId = organisationId;
-        //     group.IsActive = true;
-        // }
+        if (Group != null)
+        {
+            group = new Group
+                {
+                    Id = Group.Id,
+                    IsActive = Group.IsActive,
+                    Name = Group.Name,
+                    Description = Group.Description,
+                    OrganisationId = SessionInfo.OrganisationId
+                };
+        }
+        else
+        {
+            group.OrganisationId = SessionInfo.OrganisationId;
+            group.IsActive = true;
+        }
 
-        StateHasChanged();
+        await Task.CompletedTask;
     }
 
     private async Task Submit()
     {
         await form.Validate();
-        // if (form.IsValid)
-        // {
-        //     if (Group == null)
-        //     {
-        //         group.CreatedBy = userEmail;
-        //         await BasePage.GroupService.InsertAsync(group);
-        //     }
-        //     else
-        //     {
-        //         group.ModifiedBy = userEmail;
-        //         await BasePage.GroupService.UpdateAsync(group);
-        //     }
+        if (form.IsValid)
+        {
+            if (Group == null)
+            {
+                group.CreatedBy = SessionInfo.UserEmail;
+                await BasePage.InsertApiAsync<Group>("Group/insert", group);
+            }
+            else
+            {
+                group.ModifiedBy = SessionInfo.UserEmail;
+                await BasePage.InsertApiAsync<Group>("Group/update", group);
+            }
             MudDialog.Close(DialogResult.Ok(true));
-        // }
+        }
     }
 
     private void Cancel() => MudDialog.Cancel();

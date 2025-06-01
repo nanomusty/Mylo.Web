@@ -95,7 +95,7 @@
     {
         try
         {
-            groups = Enumerable.Empty<Group>();
+            groups = await BasePage.GetAllApiAsync<IEnumerable<Group>>($"Group/get-all?OrganisationId={SessionInfo.OrganisationId}");
         }
         catch (Exception ex)
         {
@@ -143,11 +143,18 @@
 
         if (confirm == true)
         {
+            var data = new
+            {
+                organisationId = SessionInfo.OrganisationId,
+                id = group.Id,
+                deletedBy = SessionInfo.UserEmail
+            };
+
             try
             {
-                //await BasePage.GroupService.DeleteAsync(group.OrganisationId, group.Id, userEmail);
+                await BasePage.DeleteApiAsync<Group>("Group/delete", data);
                 await LoadData();
-                BasePage.Snackbar.Add("Group deleted successfully", Severity.Success);
+                BasePage.Snackbar.Add("Deleted successfully", Severity.Success);
             }
             catch (Exception ex)
             {
