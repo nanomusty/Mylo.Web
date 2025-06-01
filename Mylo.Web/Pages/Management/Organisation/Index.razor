@@ -1,0 +1,169 @@
+﻿@page "/management/organisations"
+
+@inject BasePage BasePage
+@inject SessionInfo SessionInfo
+@implements IDisposable
+
+<MudContainer MaxWidth="MaxWidth.False" Class="mt-4">
+    @if (loading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-7" />
+    }
+    @if (SessionInfo.UserType != UserType.SuperAdministrator)
+    {
+        <MudText>This page is not available for your user type.</MudText>
+    }
+    else
+    {   
+        <MudPaper Elevation="0" Class="pa-4">
+
+            <MudGrid>
+                <MudItem xs="12" sm="6">
+                    <MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">Organisations</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="6" Class="d-flex justify-end">
+                    <MudButton Variant="Variant.Filled"
+                    Color="Color.Primary"
+                    StartIcon="@Icons.Material.Filled.Add"
+                    OnClick="OpenCreateDialog">
+                        New Organisation
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+
+            <MudTable Items="@organisations"
+            Dense="true"
+            Hover="true"
+            Bordered="true"
+            Striped="true"
+            Loading="@loading">
+                <HeaderContent>
+                    <MudTh>Name</MudTh>
+                    <MudTh>Status</MudTh>
+                    <MudTh>Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Name">@context.Name</MudTd>
+                    <MudTd DataLabel="Status">
+                        <MudChip T="string"
+                        Size="Size.Small"
+                        Color="@(context.IsActive ? Color.Success : Color.Error)">
+                            @(context.IsActive ? "Active" : "Passive")
+                        </MudChip>
+                    </MudTd>
+                    <MudTd DataLabel="Actions">
+                        <MudStack Row="true">
+                            <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                            Color="Color.Info"
+                            Size="Size.Small"
+                            OnClick="@(() => OpenAdminDialog(context.Id))" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                            Color="Color.Primary"
+                            Size="Size.Small"
+                            OnClick="@(() => OpenEditDialog(context))" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                            Color="Color.Error"
+                            Size="Size.Small"
+                            OnClick="@(() => DeleteOrganisation(context))" />
+                        </MudStack>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+    }
+</MudContainer>
+
+@code {
+    private List<Organisation> organisations = new();
+    private bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        loading = true;
+        await LoadOrganisations();
+        loading = false;
+    }
+
+    private async Task LoadOrganisations()
+    {
+        try
+        {
+            organisations = await BasePage.GetAllApiAsync<List<Organisation>>("Organisation/get-all");
+        }
+        catch
+        {
+            BasePage.Snackbar.Add("Error loading organisations.", Severity.Error);
+        }
+        loading = false;
+    }
+
+    private async Task OpenAdminDialog(Guid organisationId)
+    {
+        // var parameters = new DialogParameters { ["OrganisationId"] = organisationId };
+
+        // var dialog = await BasePage.DialogService.ShowAsync<AdminDialog>("Admin Add / Update", parameters);
+        // var result = await dialog.Result;
+
+        // if (!result.Canceled)
+        // {
+        //     BasePage.Snackbar.Add("Admin Saved.", Severity.Success);
+        // }
+    }
+
+    private async Task OpenCreateDialog()
+    {
+        var dialog = await BasePage.DialogService.ShowAsync<OrganisationDialog>("New Organisation");
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadOrganisations();
+            BasePage.Snackbar.Add("Organisation added successfully.", Severity.Success);
+        }
+    }
+
+    private async Task OpenEditDialog(Organisation organisation)
+    {
+        var parameters = new DialogParameters
+        {
+            { "Model", organisation }
+        };
+
+        var dialog = await BasePage.DialogService.ShowAsync<OrganisationDialog>("Edit Organisation", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadOrganisations();
+            BasePage.Snackbar.Add("Organisation updated successfully.", Severity.Success);
+        }
+    }
+
+    private async Task DeleteOrganisation(Organisation organisation)
+    {
+        bool? confirmed = await BasePage.DialogService.ShowMessageBox(
+            "Confirm Delete",
+            $"Are you sure you want to delete {organisation.Name}?",
+            "Yes", "No");
+
+        if (confirmed == true)
+        {
+            try
+            {
+                var org = await BasePage.DeleteApiAsync<Organisation>("Organisation/delete", new { organisation.Id, deletedBy = SessionInfo.UserEmail} );
+                await LoadOrganisations();
+                BasePage.Snackbar.Add($"{org.Name} deleted successfully.", Severity.Success);
+            }
+            catch
+            {
+                BasePage.Snackbar.Add("Error while deleting.", Severity.Error);
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        organisations.Clear();
+        organisations = null;
+    }
+}

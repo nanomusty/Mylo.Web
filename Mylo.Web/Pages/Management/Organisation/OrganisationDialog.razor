@@ -1,0 +1,68 @@
+﻿@inject BasePage BasePage
+@inject SessionInfo SessionInfo
+
+<EditForm Model="@model" OnValidSubmit="HandleValidSubmit">
+    <MudDialog Title="@Title">
+        <DialogContent>
+            <MudItem xs="12" Class="d-flex justify-end">
+                <MudSwitch Color="Color.Primary" @bind-Value="model.IsActive" />
+            </MudItem>
+            <MudTextField @bind-Value="model.Name" Label="Organisation Name" Required="true" />
+            <MudSelect T="PriceTier" @bind-Value="model.PriceTier" Label="Price Tier" Required="true">
+                <MudSelectItem Value="PriceTier.Free">Free</MudSelectItem>
+                <MudSelectItem Value="PriceTier.Basic">Basic</MudSelectItem>
+                <MudSelectItem Value="PriceTier.Premium">Premium</MudSelectItem>
+            </MudSelect>
+        </DialogContent>
+
+        <DialogActions>
+            <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" ButtonType="ButtonType.Submit">Save</MudButton>
+        </DialogActions>
+    </MudDialog>
+</EditForm>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public Organisation Model { get; set; }
+
+    private Organisation model = new();
+    private string Title => Model is null ? "New Organisation" : "Edit Organisation";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Model != null)
+        {
+            model = new Organisation
+                {
+                    Id = Model.Id,
+                    Name = Model.Name,
+                    PriceTier = Model.PriceTier,
+                    IsActive = Model.IsActive,
+                    ModifiedBy = SessionInfo.UserEmail
+                };
+        }
+        else
+        {
+            model.CreatedBy = SessionInfo.UserEmail;
+        }
+
+        await Task.CompletedTask;
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (model.Id == Guid.Empty)
+        {
+            await BasePage.InsertApiAsync<Organisation>("Organisation/insert", model);
+        }
+        else
+        {
+            await BasePage.InsertApiAsync<Organisation>("Organisation/update", model);
+        }
+
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    private async Task Cancel() => MudDialog.Cancel();
+}
