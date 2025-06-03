@@ -1,5 +1,256 @@
 ﻿@page "/"
 
-<h1>Hello, world!</h1>
+<PageTitle>MYLO - Modern Law Office Management System</PageTitle>
 
-Welcome to your new app.
+<style>
+    .feature-list {
+        display: flex;
+        justify-content: center; /* UL ortalanır */
+    }
+
+        .feature-list ul {
+            text-align: left; /* Yazılar sola yaslı */
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .feature-list li {
+            display: block; /* Alt alta dizilmesini garanti eder */
+            margin-bottom: 0.5rem; /* Öğeler arası boşluk (isteğe bağlı) */
+        }
+</style>
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-12">
+
+    <!-- Hero Section -->
+    <MudGrid>
+        <MudItem xs="12" Class="d-flex flex-column align-center text-center mb-16">
+            <MudText Typo="Typo.h2" Class="mb-4">Modern Law Office Management System</MudText>
+            <MudText Typo="Typo.h5" Color="Color.Secondary" Class="mb-2">
+                Trusted by law firms around the world for managing clients, cases, documents, and finances.
+            </MudText>
+            <MudSpacer />
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" Href="/Account/Login" StartIcon="@Icons.Material.Filled.PlayArrow" Class="px-8">
+                Try Demo Now
+            </MudButton>
+            <MudSpacer />
+
+            <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-8">
+                MYLO is your modern law office assistant—streamline your legal work with powerful, secure, and intuitive tools. <br />
+                <div class="feature-list">
+                    <ul>
+                        <li>🔹 Try the demo—no signup required.</li>
+                        <li>🔹 Like what you see? Sign up for free in minutes.</li>
+                    </ul>
+                </div>
+                
+            </MudText>
+            <MudPaper Elevation="0" Class="d-flex gap-8 pa-8">
+                <MudIcon Icon="@Icons.Material.Filled.Gavel" Color="Color.Primary" Size="Size.Large" />
+                <MudIcon Icon="@Icons.Material.Filled.Description" Color="Color.Secondary" Size="Size.Large" />
+                <MudIcon Icon="@Icons.Material.Filled.People" Color="Color.Info" Size="Size.Large" />
+                <MudIcon Icon="@Icons.Material.Filled.Balance" Color="Color.Success" Size="Size.Large" />
+                <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Color="Color.Warning" Size="Size.Large" />
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+
+    <!-- Stats Section -->
+    <MudGrid Class="mb-16">
+        <MudItem xs="12" sm="4">
+            <MudPaper Elevation="0" Class="d-flex flex-column align-center pa-4">
+                <MudIcon Icon="@Icons.Material.Filled.Groups" Color="Color.Primary" Size="Size.Large" Class="mb-4" />
+                <MudText Typo="Typo.h3" Class="mb-2">1000+</MudText>
+                <MudText>Law Firms Trust Us</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="4">
+            <MudPaper Elevation="0" Class="d-flex flex-column align-center pa-4">
+                <MudIcon Icon="@Icons.Material.Filled.WorkHistory" Color="Color.Secondary" Size="Size.Large" Class="mb-4" />
+                <MudText Typo="Typo.h3" Class="mb-2">10+ Years</MudText>
+                <MudText>Industry Experience</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="4">
+            <MudPaper Elevation="0" Class="d-flex flex-column align-center pa-4">
+                <MudIcon Icon="@Icons.Material.Filled.Security" Color="Color.Success" Size="Size.Large" Class="mb-4" />
+                <MudText Typo="Typo.h3" Class="mb-2">99.9%</MudText>
+                <MudText>System Uptime</MudText>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <!-- Features Section -->
+    <MudText Typo="Typo.h4" Class="mb-8 text-center">Key Features</MudText>
+    <MudGrid Class="mb-16">
+        <MudItem xs="12" sm="6" md="4">
+            <MudCard Elevation="2" Class="h-100">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudIcon Icon="@Icons.Material.Filled.People" Color="Color.Primary" Class="mr-3" />
+                        <MudText Typo="Typo.h6">Client Management</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudText>
+                        Securely store client information, track communication history, and maintain important documents in an organized manner.
+                    </MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="4">
+            <MudCard Elevation="2" Class="h-100">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudIcon Icon="@Icons.Material.Filled.Gavel" Color="Color.Primary" Class="mr-3" />
+                        <MudText Typo="Typo.h6">Case Management</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudText>
+                        Organize cases, schedule court dates, and efficiently track legal proceedings with comprehensive case management tools.
+                    </MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="4">
+            <MudCard Elevation="2" Class="h-100">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudIcon Icon="@Icons.Material.Filled.Description" Color="Color.Primary" Class="mr-3" />
+                        <MudText Typo="Typo.h6">Document Management</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudText>
+                        Store, organize, and quickly access all legal documents in a secure digital environment with advanced search capabilities.
+                    </MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="4">
+            <MudCard Elevation="2" Class="h-100">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Color="Color.Primary" Class="mr-3" />
+                        <MudText Typo="Typo.h6">Financial Tracking</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudText>
+                        Monitor payments, generate invoices, and create detailed financial reports for better business insights.
+                    </MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="4">
+            <MudCard Elevation="2" Class="h-100">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudIcon Icon="@Icons.Material.Filled.Event" Color="Color.Primary" Class="mr-3" />
+                        <MudText Typo="Typo.h6">Calendar & Reminders</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudText>
+                        Schedule important dates, receive court hearing and meeting reminders, and manage your time effectively.
+                    </MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="4">
+            <MudCard Elevation="2" Class="h-100">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudIcon Icon="@Icons.Material.Filled.Analytics" Color="Color.Primary" Class="mr-3" />
+                        <MudText Typo="Typo.h6">Analytics & Reporting</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudText>
+                        Analyze your firm's performance with comprehensive statistics and customizable reports.
+                    </MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+
+    <!-- Benefits Section -->
+    <MudDivider Class="mb-16" />
+    <MudText Typo="Typo.h4" Class="mb-8 text-center">Why Choose MYLO?</MudText>
+    <MudGrid Class="mb-16">
+        <MudItem xs="12" md="6">
+            <MudList T="string" Clickable="false">
+                <MudListItem T="string" Dense="true" Icon="@Icons.Material.Filled.Security">
+                    <MudText Typo="Typo.body1"><b>Secure & Reliable</b></MudText>
+                    <MudText Typo="Typo.body2">We protect your data with the highest security standards and encryption.</MudText>
+                </MudListItem>
+                <MudListItem T="string" Dense="true" Icon="@Icons.Material.Filled.Speed">
+                    <MudText Typo="Typo.body1"><b>Fast & Efficient</b></MudText>
+                    <MudText Typo="Typo.body2">Modern interface designed for quick and intuitive task completion.</MudText>
+                </MudListItem>
+                <MudListItem T="string" Dense="true" Icon="@Icons.Material.Filled.Cloud">
+                    <MudText Typo="Typo.body1"><b>Cloud Access</b></MudText>
+                    <MudText Typo="Typo.body2">Work from anywhere with our secure cloud-based system.</MudText>
+                </MudListItem>
+            </MudList>
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudList T="string" Clickable="false">
+                <MudListItem T="string" Dense="true" Icon="@Icons.Material.Filled.Update">
+                    <MudText Typo="Typo.body1"><b>Regular Updates</b></MudText>
+                    <MudText Typo="Typo.body2">Continuous improvements and new features based on user feedback.</MudText>
+                </MudListItem>
+                <MudListItem T="string" Dense="true" Icon="@Icons.Material.Filled.Support">
+                    <MudText Typo="Typo.body1"><b>24/7 Support</b></MudText>
+                    <MudText Typo="Typo.body2">Dedicated technical support team ready to assist you anytime.</MudText>
+                </MudListItem>
+                <MudListItem T="string" Dense="true" Icon="@Icons.Material.Filled.Payments">
+                    <MudText Typo="Typo.body1"><b>Flexible Pricing</b></MudText>
+                    <MudText Typo="Typo.body2">Scalable packages suitable for firms of all sizes.</MudText>
+                </MudListItem>
+            </MudList>
+        </MudItem>
+    </MudGrid>
+
+    <!-- Contact Section -->
+    <MudDivider Class="mb-16" />
+    <MudGrid Class="mb-16">
+        <MudItem xs="12" Class="d-flex flex-column align-center text-center">
+            <MudText Typo="Typo.h4" Class="mb-4">Get Started Today</MudText>
+            <MudText Typo="Typo.body1" Class="mb-8">
+                Contact us for more information and to request a personalized demo of MYLO.
+            </MudText>
+            <MudButton Href="/contact" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large"
+                       StartIcon="@Icons.Material.Filled.Email" Class="px-8">
+                Contact Us
+            </MudButton>
+        </MudItem>
+    </MudGrid>
+
+
+</MudContainer>
+
+<style>
+    .mud-card {
+        transition: transform 0.2s;
+    }
+
+        .mud-card:hover {
+            transform: translateY(-5px);
+        }
+
+    .mud-icon {
+        transition: transform 0.3s;
+    }
+
+        .mud-icon:hover {
+            transform: scale(1.2);
+        }
+</style>
