@@ -1,0 +1,233 @@
+﻿@page "/Account/Register"
+
+@layout EmptyLayout
+
+@using System.Text.RegularExpressions
+@using System.ComponentModel.DataAnnotations
+
+@inject BasePage BasePage
+@inject SessionInfo SessionInfo
+@inject IWebAssemblyHostEnvironment HostEnvironment
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-16">
+    <MudPaper Elevation="3" Class="pa-8">
+        <MudText Typo="Typo.h4" Align="Align.Center" Class="mb-4">Create Your Organization</MudText>
+
+        <MudForm @ref="_form" @bind-IsValid="@_success">
+            <!-- Organization Details -->
+            <MudText Typo="Typo.h6" Class="mb-4">Organization Details</MudText>
+
+            <MudItem xs="12">
+                <MudTextField @bind-Value="_model.OrganisationName"
+                Label="Organisation Name"
+                Required="true" />
+            </MudItem>
+
+            <!-- Admin User Details -->
+            <MudDivider Class="mb-6" />
+            <MudText Typo="Typo.h6" Class="mb-4">Admin Account Details</MudText>
+
+            <MudGrid>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_model.AdminFirstName"
+                    Label="First Name"
+                    Required="true"
+                    RequiredError="First name is required"
+                    Class="mb-4" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_model.AdminLastName"
+                    Label="Last Name"
+                    Required="true"
+                    RequiredError="Last name is required"
+                    Class="mb-4" />
+                </MudItem>
+            </MudGrid>
+
+            <MudTextField @bind-Value="_model.AdminEmail" Label="Admin Email" Required="true"
+            RequiredError="Admin email is required"
+            Validation="@(new EmailAddressAttribute() {ErrorMessage = "Invalid email address"})"
+            Class="mb-4" />
+
+            <MudTextField @bind-Value="_model.Password" Label="Password" Required="true"
+            RequiredError="Password is required" InputType="InputType.Password"
+            Validation="@(new Func<string, IEnumerable<string>>(ValidatePassword))"
+            Class="mb-4" />
+
+            <MudTextField @bind-Value="_model.ConfirmPassword" Label="Confirm Password" Required="true"
+            RequiredError="Please confirm your password" InputType="InputType.Password"
+            Validation="@(new Func<string, string>(ValidateConfirmPassword))"
+            Class="mb-6" />
+
+            <!-- Terms and Privacy -->
+            <MudDivider Class="mb-6" />
+            <MudCheckBox @bind-Checked="_model.AcceptTerms" T="bool" Required="true"
+            RequiredError="You must accept the terms and conditions" Class="mb-2">
+                <Label>
+                    I accept the <MudLink Href="/terms" Target="_blank">terms and conditions</MudLink>
+                </Label>
+            </MudCheckBox>
+
+            <MudCheckBox @bind-Checked="_model.AcceptPrivacy" T="bool" Required="true"
+            RequiredError="You must accept the privacy policy" Class="mb-4">
+                <Label>
+                    I accept the <MudLink Href="/privacy" Target="_blank">privacy policy</MudLink>
+                </Label>
+            </MudCheckBox>
+
+            @if (!HostEnvironment.IsDevelopment())
+            {
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.body1" Class="text-center">Please enter the captcha code</MudText>
+                    <MudStack Direction="Direction.Row" Justify="Justify.Center" Spacing="2">
+                        <MudTextField @bind-Value="enteredCaptcha"
+                        Label="Captcha"
+                        Variant="Variant.Outlined"
+                        InputType="InputType.Text"
+                        Size="Size.Large"
+                        Class="mt-3"
+                        Style="width: 200px;" />
+                        <MudButton OnClick="GenerateNewCaptcha"
+                        Variant="Variant.Outlined"
+                        Color="Color.Primary"
+                        Size="Size.Large"
+                        Class="mt-3">
+                            <MudIcon Icon="@Icons.Material.Filled.Refresh" />
+                        </MudButton>
+                    </MudStack>
+                    <MudText Typo="Typo.h6" Class="text-center" Style="letter-spacing: 5px;">@captchaCode</MudText>
+                </MudStack>
+            }
+
+            <div class="d-flex justify-space-between align-center">
+                @*                 <MudButton Variant="Variant.Text" OnClick="@(() => BasePage.NavigationManager.NavigateTo("/pricing"))">
+                    Back to Pricing
+                </MudButton> *@
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!_success)"
+                OnClick="HandleRegistration">
+                    Create Organization
+                </MudButton>
+            </div>
+        </MudForm>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    [Parameter]
+    public string Token { get; set; }
+
+    private MudForm _form;
+    private bool _success;
+    private OrganisationRegisterModel _model = new();
+    string message = "";
+    private string captchaCode = "";
+    private string enteredCaptcha = "";
+    private Random random = new Random();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!HostEnvironment.IsDevelopment())
+        {
+            GenerateNewCaptcha();
+        }
+        
+        await Task.CompletedTask;
+    }
+
+    private void GenerateNewCaptcha()
+    {
+        captchaCode = random.Next(100000, 999999).ToString();
+        enteredCaptcha = "";
+    }
+
+    private IEnumerable<string> ValidatePassword(string pw)
+    {
+        if (string.IsNullOrWhiteSpace(pw))
+            yield return "Password is required!";
+        if (pw?.Length < 6)
+            yield return "Password must be at least 6 characters!";
+        if (!Regex.IsMatch(pw ?? "", @"[A-Z]"))
+            yield return "Password must contain at least one capital letter!";
+        if (!Regex.IsMatch(pw ?? "", @"[a-z]"))
+            yield return "Password must contain at least one lowercase letter!";
+        if (!Regex.IsMatch(pw ?? "", @"[0-9]"))
+            yield return "Password must contain at least one number!";
+    }
+
+    private string ValidateConfirmPassword(string cp)
+    {
+        if (cp != _model.Password)
+            return "Passwords do not match!";
+        return null;
+    }
+
+    private async Task HandleRegistration()
+    {
+        await _form.Validate();
+
+        if (_success)
+        {
+            try
+            {
+                if (!HostEnvironment.IsDevelopment() && enteredCaptcha != captchaCode)
+                {
+                    BasePage.Snackbar.Add("Invalid captcha code", Severity.Error);
+                    GenerateNewCaptcha();
+                    StateHasChanged();
+                    return;
+                }
+
+                var organisation = new Organisation
+                    {
+                        Name = _model.OrganisationName,
+                        IsActive = true,
+                        CreatedBy = _model.AdminEmail,
+                        PriceTier = PriceTier.Free
+                    };
+
+                var orgResult = await BasePage.InsertApiAsync<Organisation>("Organisation/insert", organisation);
+
+                if (orgResult != null)
+                {
+                    // Create admin user
+                    var user = new User
+                        {
+                            OrganisationId = SessionInfo.OrganisationId,
+                            FirstName = _model.AdminFirstName,
+                            LastName = _model.AdminLastName,
+                            Email = _model.AdminEmail,
+                            Password = _model.Password,
+                            UserType = UserType.Administrator,
+                            IsActive = true,
+                            CreatedBy = _model.AdminEmail
+                        };
+
+                    var userResult = await BasePage.InsertApiAsync<User>("User/insert", user);
+
+                    if (userResult == null)
+                    {
+                        BasePage.Snackbar.Add("Failed to create admin user.", Severity.Error);
+                        return;
+                    }
+
+                    BasePage.Snackbar.Add("Organization created successfully! Redirecting to login...", Severity.Success);
+                    await Task.Delay(1000);
+                    BasePage.NavigationManager.NavigateTo("/Account/Login");
+                }
+                else
+                {
+                    BasePage.Snackbar.Add("Failed to create organization.", Severity.Error);
+                    if (!HostEnvironment.IsDevelopment())
+                    {
+                        GenerateNewCaptcha();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                BasePage.Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+}
