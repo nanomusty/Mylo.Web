@@ -241,5 +241,45 @@ namespace Mylo.Web.Base
                 return default;
             }
         }
+
+        public async Task<T> CustomApiAsync<T>(string url, object data)
+        {
+            try
+            {
+                var httpClient = httpClientFactory.CreateClient("Wasm");
+
+                var token = await localStorage.GetItemAsync<string>("authToken");
+                if (!string.IsNullOrEmpty(token))
+                {
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                }
+
+                var response = await httpClient.PostAsJsonAsync(url, data);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+                    {
+                        return default;
+                    }
+
+                    var responseData = await response.Content.ReadAsStringAsync();
+                    return JsonSerializer.Deserialize<T>(responseData, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+                }
+                else
+                {
+                    Snackbar.Add("An error occurred while deleting data.", Severity.Error);
+                    return default;
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"An error occurred: {ex.Message}", Severity.Error);
+                return default;
+            }
+        }
     }
 }

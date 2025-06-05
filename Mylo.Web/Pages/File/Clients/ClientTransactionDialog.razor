@@ -1,0 +1,93 @@
+@inject BasePage BasePage
+@inject SessionInfo SessionInfo
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="form" @bind-IsValid="@success" @bind-Errors="@errors">
+            <MudGrid>
+                <MudItem xs="12" sm="6">
+                    <MudSelect T="TransactionType" Label="Transaction Type" @bind-Value="transaction.TransactionType" Required="true">
+                        <MudSelectItem Value="@TransactionType.Income">Income</MudSelectItem>
+                        <MudSelectItem Value="@TransactionType.Expense">Expense</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="transaction.Category" Label="Category" Required="true" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="transaction.Amount" Label="Amount" Required="true" InputType="InputType.Number" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudDatePicker Date="@(transaction.TransactionDate == DateTime.MinValue ? DateTime.Today : transaction.TransactionDate)"
+                                   DateChanged="@(value => transaction.TransactionDate = value ?? DateTime.Today)"
+                                   Label="Transaction Date"
+                                   Required="true" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="transaction.Description" Label="Description" Lines="3" />
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="Submit">Save</MudButton>
+        <MudButton Color="Color.Secondary" OnClick="Cancel">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter]
+    public ClientTransaction Transaction { get; set; }
+
+    [Parameter]
+    public Guid ClientId { get; set; }
+
+    private ClientTransaction transaction = new();
+    private MudForm form;
+    private bool success;
+    private string[] errors;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Transaction != null)
+        {
+            transaction = Transaction;
+        }
+        else
+        {
+            transaction.ClientId = ClientId;
+            //transaction.Client = await BasePage.ClientService.GetAsync(ClientId);
+            transaction.TransactionDate = DateTime.UtcNow.Date;
+        }
+    }
+
+    private async Task Submit()
+    {
+        await form.Validate();
+        if (form.IsValid)
+        {
+            try
+            {
+                if (Transaction == null)
+                {
+                    transaction.CreatedBy = SessionInfo.UserEmail;
+                    //await BasePage.ClientTransactionService.CreateAsync(transaction);
+                }
+                else
+                {
+                    transaction.ModifiedBy = SessionInfo.UserEmail;
+                    //await BasePage.ClientTransactionService.UpdateAsync(transaction);
+                }
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            catch (Exception ex)
+            {
+                BasePage.Snackbar.Add("Error saving transaction: " + ex.Message, Severity.Error);
+            }
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+} 

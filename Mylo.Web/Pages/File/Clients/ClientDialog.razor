@@ -1,0 +1,286 @@
+@inject BasePage BasePage
+@inject SessionInfo SessionInfo
+
+<MudDialog MaxWidth="MaxWidth.Medium" FullWidth="true" DialogContentClass="pa-4">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(Client == null ? "New Client" : "Edit Client")</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTabs>
+            <MudTabPanel Text="Client Details">
+                <MudForm Model="@client" @ref="form">
+                    <MudGrid>
+                        <MudItem xs="12" Class="d-flex justify-end">
+                            <MudSwitch T="bool"
+                                       Color="Color.Primary"
+                                       @bind-Value="client.IsActive" />
+                        </MudItem>
+
+                        <MudItem xs="12">
+                            <MudRadioGroup T="ClientType" @bind-Value="client.ClientType" Required="true">
+                                <MudRadio T="ClientType" Value="@ClientType.Person" Color="Color.Primary">Person</MudRadio>
+                                <MudRadio T="ClientType" Value="@ClientType.Company" Color="Color.Primary">Company</MudRadio>
+                            </MudRadioGroup>
+                        </MudItem>
+
+                        @if (client.ClientType == ClientType.Company)
+                        {
+                            <MudItem xs="12">
+                                <MudTextField @bind-Value="client.CompanyName"
+                                              Label="Company Name"
+                                              Required="true" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudTextField @bind-Value="client.TaxNumber"
+                                              Label="Tax Number" />
+                            </MudItem>
+                        }
+
+                        @if (client.ClientType == ClientType.Person)
+                        {
+                            <MudItem xs="12" sm="6">
+                                <MudTextField @bind-Value="client.FirstName"
+                                              Label="First Name"
+                                              Required="true" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudTextField @bind-Value="client.LastName"
+                                              Label="Last Name"
+                                              Required="true" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudTextField @bind-Value="client.IdentityNumber"
+                                              Label="Identity Number" />
+                            </MudItem>
+                        }
+
+                        <MudItem xs="12" sm="6">
+                            <MudTextField @bind-Value="client.Email"
+                                          Label="Email"
+                                          Required="true" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudTextField @bind-Value="client.Phone"
+                                          Label="Phone" />
+                        </MudItem>
+                        <MudItem xs="12">
+                            <MudTextField @bind-Value="client.Address"
+                                          Label="Address" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudTextField @bind-Value="client.City"
+                                          Label="City" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudTextField @bind-Value="client.Country"
+                                          Label="Country" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudTextField @bind-Value="client.PostalCode"
+                                          Label="Postal Code" />
+                        </MudItem>
+                        <MudItem xs="12">
+                            <MudTextField @bind-Value="client.Notes"
+                                          Label="Notes"
+                                          Lines="3" />
+                        </MudItem>
+                    </MudGrid>
+                </MudForm>
+            </MudTabPanel>
+            <MudTabPanel Text="Transactions">
+                <MudToolBar DisableGutters="true" Class="mt-4">
+                    <MudButton StartIcon="@Icons.Material.Filled.Add"
+                               OnClick="@OpenCreateTransactionDialog"
+                               Color="Color.Primary"
+                               Variant="Variant.Filled">
+                        New Transaction
+                    </MudButton>
+                </MudToolBar>
+
+                <MudTable Items="@transactions" Dense="true" Hover="true" Loading="@isLoading" LoadingProgressColor="Color.Info">
+                    <HeaderContent>
+                        <MudTh>Date</MudTh>
+                        <MudTh>Type</MudTh>
+                        <MudTh>Category</MudTh>
+                        <MudTh>Amount</MudTh>
+                        <MudTh>Description</MudTh>
+                        <MudTh>Actions</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Date">@context.TransactionDate.ToShortDateString()</MudTd>
+                        <MudTd DataLabel="Type">@context.TransactionType</MudTd>
+                        <MudTd DataLabel="Category">@context.Category</MudTd>
+                        <MudTd DataLabel="Amount" Align="Align.Right">
+                            <MudText Color="@(context.TransactionType == TransactionType.Income ? Color.Success : Color.Error)">
+                                @context.Amount.ToString("C")
+                            </MudText>
+                        </MudTd>
+                        <MudTd DataLabel="Description">@context.Description</MudTd>
+                        <MudTd DataLabel="Actions">
+                            <MudIconButton Icon="@Icons.Material.Outlined.Edit"
+                                           OnClick="@(() => OpenEditTransactionDialog(context))"
+                                           Color="Color.Primary" />
+                            <MudIconButton Icon="@Icons.Material.Outlined.Delete"
+                                           OnClick="@(() => DeleteTransaction(context))"
+                                           Color="Color.Error" />
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudTabPanel>
+        </MudTabs>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="Submit">Save</MudButton>
+        <MudButton Color="Color.Secondary" OnClick="Cancel">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public ClientModel? Client { get; set; }
+
+    private ClientModel client = new();
+    private MudForm? form;
+    private IEnumerable<ClientTransaction> transactions = new List<ClientTransaction>();
+    private decimal totalIncome;
+    private decimal totalExpense;
+    private decimal balance;
+    private bool isLoading;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Client != null)
+        {
+            client = new ClientModel
+                {
+                    Id = Client.Id,
+                    OrganisationId = Client.OrganisationId,
+                    FirstName = Client.FirstName,
+                    LastName = Client.LastName,
+                    Email = Client.Email,
+                    Phone = Client.Phone,
+                    Address = Client.Address,
+                    City = Client.City,
+                    Country = Client.Country,
+                    PostalCode = Client.PostalCode,
+                    ClientType = Client.ClientType,
+                    CaseCount = Client.CaseCount,
+                    Notes = Client.Notes,
+                    CompanyName = Client.CompanyName,
+                    TaxNumber = Client.TaxNumber,
+                    IdentityNumber = Client.IdentityNumber,
+                    IsActive = Client.IsActive,
+                };
+
+            await LoadTransactions();
+        }
+        else
+        {
+            client.OrganisationId = SessionInfo.OrganisationId;
+            client.ClientType = ClientType.Person;
+            client.IsActive = true;
+        }
+    }
+
+    private async Task LoadTransactions()
+    {
+        try
+        {
+            isLoading = true;
+            // transactions = await BasePage.ClientTransactionService.GetAllAsync(client.Id);
+            // totalIncome = await BasePage.ClientTransactionService.GetTotalIncomeAsync(client.Id);
+            // totalExpense = await BasePage.ClientTransactionService.GetTotalExpenseAsync(client.Id);
+            // balance = await BasePage.ClientTransactionService.GetBalanceAsync(client.Id);
+        }
+        catch (Exception ex)
+        {
+            BasePage.Snackbar.Add("Error loading transactions: " + ex.Message, Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task OpenCreateTransactionDialog()
+    {
+        var parameters = new DialogParameters
+        {
+            { "ClientId", client.Id }
+        };
+
+        var dialog = await BasePage.DialogService.ShowAsync<ClientTransactionDialog>("New Transaction", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadTransactions();
+            BasePage.Snackbar.Add("Transaction created successfully", Severity.Success);
+        }
+    }
+
+    private async Task OpenEditTransactionDialog(ClientTransaction transaction)
+    {
+        var parameters = new DialogParameters
+        {
+            { "Transaction", transaction }
+        };
+
+        var dialog = await BasePage.DialogService.ShowAsync<ClientTransactionDialog>("Edit Transaction", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadTransactions();
+            BasePage.Snackbar.Add("Transaction updated successfully", Severity.Success);
+        }
+    }
+
+    private async Task DeleteTransaction(ClientTransaction transaction)
+    {
+        var confirm = await BasePage.DialogService.ShowMessageBox(
+            "Delete Confirmation",
+            "Are you sure you want to delete this transaction?",
+            "Yes",
+            "No",
+            options: new DialogOptions { MaxWidth = MaxWidth.ExtraSmall });
+
+        if (confirm == true)
+        {
+            try
+            {
+                // await BasePage.ClientTransactionService.DeleteAsync(transaction.Id, userEmail);
+                await LoadTransactions();
+                BasePage.Snackbar.Add("Transaction deleted successfully", Severity.Success);
+            }
+            catch (Exception ex)
+            {
+                BasePage.Snackbar.Add("Error deleting transaction: " + ex.Message, Severity.Error);
+            }
+        }
+    }
+
+    private async Task Submit()
+    {
+        await form.Validate();
+        if (form.IsValid)
+        {
+            if (client is null)
+            {
+                client.CreatedBy = SessionInfo.UserEmail;
+                await BasePage.InsertApiAsync<ClientModel>("Client/insert", client);
+            }
+            else
+            {
+                client.ModifiedBy = SessionInfo.UserEmail;
+                await BasePage.UpdateApiAsync<ClientModel>("Client/update", client);
+            }            
+        }
+
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+} 
