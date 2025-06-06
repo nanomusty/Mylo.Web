@@ -164,7 +164,7 @@
                     Password = Input.Password
                 };
 
-            var LoginResponse = await BasePage.PostApiAsync<LoginResponse>("api/Auth/login", data);
+            var LoginResponse = await BasePage.PostApiAsync<LoginResponse>("Auth/login", data);
 
             if (LoginResponse is not null)
             {
