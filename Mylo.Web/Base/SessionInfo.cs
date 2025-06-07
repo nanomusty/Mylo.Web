@@ -22,7 +22,7 @@ namespace Mylo.Web.Base
         public UserType UserType { get; private set; } = UserType.None; // Varsayılan değer
         public PriceTier PriceTier { get; private set; } = PriceTier.None; // Varsayılan değer
         public Guid OrganisationId { get; private set; } = Guid.Empty;
-        public string Language { get; private set; } = "en"; // Varsayılan değer
+        public string Language { get; private set; } = "en-US"; // Varsayılan değer
 
         // Kullanıcının oturum açıp açmadığını kontrol etmek için
         public async Task<bool> IsAuthenticatedAsync()

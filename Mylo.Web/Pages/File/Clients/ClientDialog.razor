@@ -1,3 +1,5 @@
+@using System.Globalization;
+
 @inject BasePage BasePage
 @inject SessionInfo SessionInfo
 
@@ -112,7 +114,7 @@
                         <MudTd DataLabel="Category">@context.Category</MudTd>
                         <MudTd DataLabel="Amount" Align="Align.Right">
                             <MudText Color="@(context.TransactionType == TransactionType.Income ? Color.Success : Color.Error)">
-                                @context.Amount.ToString("C")
+                                @context.Amount.ToString("C", new CultureInfo(SessionInfo.Language))
                             </MudText>
                         </MudTd>
                         <MudTd DataLabel="Description">@context.Description</MudTd>
@@ -188,10 +190,10 @@
         try
         {
             isLoading = true;
-            // transactions = await BasePage.ClientTransactionService.GetAllAsync(client.Id);
-            // totalIncome = await BasePage.ClientTransactionService.GetTotalIncomeAsync(client.Id);
-            // totalExpense = await BasePage.ClientTransactionService.GetTotalExpenseAsync(client.Id);
-            // balance = await BasePage.ClientTransactionService.GetBalanceAsync(client.Id);
+            transactions = await BasePage.GetAllApiAsync<IEnumerable<ClientTransaction>>($"ClientTransaction/get-all?ClientId={client.Id}");
+            totalIncome = await BasePage.GetApiAsync<decimal>($"ClientTransaction/total-income?ClientId={client.Id}");
+            totalExpense = await BasePage.GetApiAsync<decimal>($"ClientTransaction/total-expense?ClientId={client.Id}");
+            balance = await BasePage.GetApiAsync<decimal>($"ClientTransaction/balance?ClientId={client.Id}");
         }
         catch (Exception ex)
         {
@@ -251,7 +253,13 @@
         {
             try
             {
-                // await BasePage.ClientTransactionService.DeleteAsync(transaction.Id, userEmail);
+                 var data = new
+                {
+                    Id = transaction.Id,
+                    DeletedBy = SessionInfo.UserEmail
+                };
+
+                await BasePage.DeleteApiAsync<ClientTransaction>("ClientTransaction/delete", data);
                 await LoadTransactions();
                 BasePage.Snackbar.Add("Transaction deleted successfully", Severity.Success);
             }

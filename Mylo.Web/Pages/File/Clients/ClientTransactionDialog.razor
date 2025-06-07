@@ -19,9 +19,9 @@
                 </MudItem>
                 <MudItem xs="12" sm="6">
                     <MudDatePicker Date="@(transaction.TransactionDate == DateTime.MinValue ? DateTime.Today : transaction.TransactionDate)"
-                                   DateChanged="@(value => transaction.TransactionDate = value ?? DateTime.Today)"
-                                   Label="Transaction Date"
-                                   Required="true" />
+                    DateChanged="@(value => transaction.TransactionDate = value ?? DateTime.Today)"
+                    Label="Transaction Date"
+                    Required="true" />
                 </MudItem>
                 <MudItem xs="12">
                     <MudTextField @bind-Value="transaction.Description" Label="Description" Lines="3" />
@@ -58,7 +58,7 @@
         else
         {
             transaction.ClientId = ClientId;
-            //transaction.Client = await BasePage.ClientService.GetAsync(ClientId);
+            transaction.Client = await BasePage.GetAllApiAsync<ClientModel>($"Client/get?OrganisationId={SessionInfo.OrganisationId}&Id={ClientId}");
             transaction.TransactionDate = DateTime.UtcNow.Date;
         }
     }
@@ -73,12 +73,12 @@
                 if (Transaction == null)
                 {
                     transaction.CreatedBy = SessionInfo.UserEmail;
-                    //await BasePage.ClientTransactionService.CreateAsync(transaction);
+                    await BasePage.InsertApiAsync<ClientTransaction>("ClientTransaction/insert", transaction);
                 }
                 else
                 {
                     transaction.ModifiedBy = SessionInfo.UserEmail;
-                    //await BasePage.ClientTransactionService.UpdateAsync(transaction);
+                    await BasePage.InsertApiAsync<ClientTransaction>("ClientTransaction/update", transaction);
                 }
                 MudDialog.Close(DialogResult.Ok(true));
             }
