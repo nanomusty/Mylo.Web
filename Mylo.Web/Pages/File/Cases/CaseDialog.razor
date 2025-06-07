@@ -1,0 +1,423 @@
+@inject BasePage BasePage
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(Case == null ? "New Case" : "Edit Case")</MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (isLoading)
+        {
+            <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-7" />
+        }
+        else
+        {
+            <MudForm Model="@caseModel" @ref="form" Class="mt-4">
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" sm="6">
+                        <MudText>Group</MudText>
+                        <MudSelect T="string" @bind-Value="selectedGroupId"
+                                   Variant="Variant.Outlined"
+                                   AnchorOrigin="Origin.BottomCenter" Required="true">
+                            <MudSelectItem Value="@(string.Empty)">Select a group</MudSelectItem>
+                            @foreach (var group in groups)
+                            {
+                                <MudSelectItem Value="@(group.Id.ToString())">@group.Name</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" Class="d-flex justify-end">
+                        <MudSwitch T="bool"
+                                   Color="Color.Primary"
+                                   Label="Active"
+                                   @bind-Value="caseModel.IsActive" />
+                    </MudItem>
+
+                    <MudItem xs="12" sm="6">
+                        <MudText>Case Number</MudText>
+                        <MudTextField @bind-Value="caseModel.CaseNumber"
+                                      Variant="Variant.Outlined"
+                                      Required="true" />
+                    </MudItem>
+
+                    <MudItem xs="12" sm="6">
+                        <MudText>Case Type</MudText>
+                        <MudSelect T="CaseType" @bind-Value="caseModel.CaseType"
+                                   Variant="Variant.Outlined"
+                                   Required="true">
+                            @foreach (CaseType caseType in Enum.GetValues(typeof(CaseType)))
+                            {
+                                <MudSelectItem Value="@caseType">@caseType.ToString()</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+
+                    <MudItem xs="12">
+                        <MudText>Case Title</MudText>
+                        <MudTextField @bind-Value="caseModel.Title"
+                                      Variant="Variant.Outlined"
+                                      Required="true" />
+                    </MudItem>
+
+                    <MudItem xs="12" sm="6">
+                        <MudText>Client</MudText>
+                        <MudSelect T="string" @bind-Value="selectedClientId"
+                                   Variant="Variant.Outlined"
+                                   AnchorOrigin="Origin.BottomCenter"
+                                   Required="true">
+                            <MudSelectItem Value="@(string.Empty)">Select a client</MudSelectItem>
+                            @foreach (var client in clients)
+                            {
+                                <MudSelectItem Value="@(client.Id.ToString())">@client.FullName</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+
+                    <MudItem xs="12" sm="6">
+                        <MudText>Opposing Party</MudText>
+                        <MudSelect T="string" @bind-Value="selectedOpposingPartyId"
+                                   Variant="Variant.Outlined"
+                                   AnchorOrigin="Origin.BottomCenter">
+                            <MudSelectItem Value="@(string.Empty)">None</MudSelectItem>
+                            @foreach (var client in clients)
+                            {
+                                <MudSelectItem Value="@(client.Id.ToString())">@client.FullName</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+
+                    <MudItem xs="12" sm="6">
+                        <MudText>Status</MudText>
+                        <MudSelect T="CaseStatus" @bind-Value="caseModel.CaseStatus"
+                                   Variant="Variant.Outlined"
+                                   Required="true">
+                            @foreach (CaseStatus status in Enum.GetValues(typeof(CaseStatus)))
+                            {
+                                <MudSelectItem Value="@status">@status.ToString()</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+
+                    <MudItem xs="12" sm="6">
+                        <MudText>Assigned To</MudText>
+                        <MudSelect T="string" @bind-Value="selectedAssignedToId"
+                                   Variant="Variant.Outlined"
+                                   AnchorOrigin="Origin.BottomCenter">
+                            <MudSelectItem Value="@(string.Empty)">Unassigned</MudSelectItem>
+                            @foreach (var user in users)
+                            {
+                                <MudSelectItem Value="@(user.Id.ToString())">@($"{user.FirstName} {user.LastName}")</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+
+                    <MudItem xs="12" sm="6">
+                        <MudText>Court</MudText>
+                        <MudTextField @bind-Value="caseModel.CourtName"
+                                      Variant="Variant.Outlined" />
+                    </MudItem>
+
+                    <MudItem xs="12" sm="6">
+                        <MudText>Judge</MudText>
+                        <MudTextField @bind-Value="caseModel.JudgeName"
+                                      Variant="Variant.Outlined" />
+                    </MudItem>
+
+                    <MudItem xs="12" sm="6">
+                        <MudText>Filing Date</MudText>
+                        <MudDatePicker @bind-Date="caseModel.FilingDate"
+                                       Variant="Variant.Outlined" />
+                    </MudItem>
+
+                    <MudItem xs="12" sm="6">
+                        <MudText>Case Value</MudText>
+                        <MudTextField @bind-Value="caseModel.CaseValue"
+                                      Variant="Variant.Outlined" />
+                    </MudItem>
+
+                    <MudItem xs="12" sm="6">
+                        <MudText>Next Hearing Date</MudText>
+                        <MudDatePicker @bind-Date="caseModel.NextHearingDate"
+                                       Variant="Variant.Outlined" />
+                    </MudItem>
+
+                    <MudItem xs="12" sm="6">
+                        <MudText>Next Deadline</MudText>
+                        <MudDatePicker @bind-Date="caseModel.NextDeadline"
+                                       Variant="Variant.Outlined" />
+                    </MudItem>
+
+                    <MudItem xs="12">
+                        <MudText>Deadline Description</MudText>
+                        <MudTextField @bind-Value="caseModel.NextDeadlineDescription"
+                                      Lines="2"
+                                      Variant="Variant.Outlined" />
+                    </MudItem>
+
+                    <MudItem xs="12">
+                        <MudText>Description</MudText>
+                        <MudTextField @bind-Value="caseModel.Description"
+                                      Lines="3"
+                                      Variant="Variant.Outlined" />
+                    </MudItem>
+
+                    <MudItem xs="12">
+                        <MudText>Notes</MudText>
+                        <MudTextField @bind-Value="caseModel.Notes"
+                                      Lines="4"
+                                      Variant="Variant.Outlined" />
+                    </MudItem>
+                </MudGrid>
+            </MudForm>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit" Disabled="@isLoading">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public CaseModel? Case { get; set; }
+
+    private CaseModel caseModel = new();
+    private MudForm? form;
+    private List<ClientModel> clients = new();
+    private List<User> users = new();
+    private bool isLoading = true;
+    private List<Group> groups = new();
+    private string selectedGroupId = string.Empty;
+
+    // String-based seçim değişkenleri
+    private string selectedClientId = string.Empty;
+    private string selectedOpposingPartyId = string.Empty;
+    private string selectedAssignedToId = string.Empty;
+
+    // String değişkenlerine değer atamak için property'ler
+    private string GetStringIdFromGuid(Guid? id) => id?.ToString() ?? string.Empty;
+    private Guid? GetGuidFromString(string id) => string.IsNullOrEmpty(id) ? null : Guid.Parse(id);
+    private string userEmail = string.Empty;
+    private Guid organisationId = Guid.Empty;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        isLoading = true;
+        // userEmail = await BasePage.SessionService.GetUserEmailAsync();
+        // organisationId = await BasePage.SessionService.GetOrganisationIdAsync();        
+        StateHasChanged();
+
+        try
+        {
+            // var groupTask = BasePage.GroupService.GetAllAsync(organisationId);
+            // var clientTask = BasePage.ClientService.GetAllAsync(organisationId);
+            // var userTask = BasePage.UserService.GetAllAsync(organisationId);
+
+            // Veriler yüklenirken model hazırlığı yap
+            if (Case != null)
+            {
+                // Edit mode - copy properties
+                caseModel = new CaseModel
+                    {
+                        Id = Case.Id,
+                        OrganisationId = Case.OrganisationId,
+                        CaseNumber = Case.CaseNumber,
+                        Title = Case.Title,
+                        ClientId = Case.ClientId,
+                        ClientName = Case.ClientName,
+                        OpposingPartyId = Case.OpposingPartyId,
+                        OpposingPartyName = Case.OpposingPartyName,
+                        CaseType = Case.CaseType,
+                        CaseStatus = Case.CaseStatus,
+                        Description = Case.Description,
+                        FilingDate = Case.FilingDate,
+                        ClosingDate = Case.ClosingDate,
+                        CourtName = Case.CourtName,
+                        JudgeName = Case.JudgeName,
+                        CaseValue = Case.CaseValue,
+                        Notes = Case.Notes,
+                        AssignedToId = Case.AssignedToId,
+                        AssignedToName = Case.AssignedToName,
+                        NextHearingDate = Case.NextHearingDate,
+                        NextDeadline = Case.NextDeadline,
+                        NextDeadlineDescription = Case.NextDeadlineDescription,
+                        IsActive = Case.IsActive,
+                        GroupId = Case.GroupId,
+                        GroupName = Case.GroupName,
+                    };
+            }
+            else
+            {
+                // New case - set defaults
+                caseModel = new CaseModel
+                    {
+                        OrganisationId = organisationId,
+                        CaseStatus = CaseStatus.Active,
+                        IsActive = true
+                    };
+            }
+
+            // Tüm veriler yüklenene kadar bekle
+            //await Task.WhenAll(groupTask, clientTask, userTask);
+
+            //groups = (await groupTask).ToList();
+
+            // Verileri ata
+            // clients = await clientTask;
+            // users = (await userTask).ToList();
+
+            // Eğer grup listesi boşsa, varsayılan bir değer ekleyebilirsiniz
+            if (groups.Count == 0)
+            {
+                groups.Add(new Group { Id = Guid.Empty, Name = "No Groups" });
+            }
+
+            // Eğer hiç client yoksa varsayılan bir değer ekle
+            if (clients.Count == 0)
+            {
+                clients.Add(new ClientModel { Id = Guid.Empty, FirstName = "No", LastName = "Clients" });
+            }
+
+            // Form yüklendikten sonra biraz bekleme ekleyerek dropdown değerlerinin doğru oluşmasını sağlayalım
+            await Task.Delay(100);
+
+            // String Selection değerlerini ayarla (boş değerlerle başla)
+            selectedClientId = string.Empty; // İlk başta boş değer seçili olsun
+            selectedOpposingPartyId = string.Empty;
+            selectedAssignedToId = string.Empty;
+
+            // Düzenleme modu ise, seçilen değerleri ayarla
+            if (Case != null)
+            {
+                if (Case.ClientId != Guid.Empty)
+                {
+                    selectedClientId = GetStringIdFromGuid(Case.ClientId);
+                    selectedGroupId = GetStringIdFromGuid(Case.GroupId);
+                }
+
+                if (Case.OpposingPartyId != null && Case.OpposingPartyId != Guid.Empty)
+                {
+                    selectedOpposingPartyId = GetStringIdFromGuid(Case.OpposingPartyId);
+                }
+
+                if (Case.AssignedToId != null && Case.AssignedToId != Guid.Empty)
+                {
+                    selectedAssignedToId = GetStringIdFromGuid(Case.AssignedToId);
+                }
+            }
+        }
+        catch (Exception)
+        {
+            // Hata durumunda boş listeler oluştur
+            clients = new List<ClientModel>();
+            users = new List<User>();
+        }
+        finally
+        {
+            // İşlemler tamamlandığında yükleme durumunu kapat
+            isLoading = false;
+            StateHasChanged();
+        }
+        StateHasChanged();
+    }
+
+    private void UpdateGroup()
+    {
+        if (!string.IsNullOrEmpty(selectedGroupId) && Guid.TryParse(selectedGroupId, out var groupId) && groupId != Guid.Empty)
+        {
+            caseModel.GroupId = groupId;
+            var group = groups.FirstOrDefault(g => g.Id == groupId);
+            if (group != null)
+            {
+                caseModel.GroupName = group.Name;
+            }
+        }
+        else
+        {
+            caseModel.GroupId = null;
+            caseModel.GroupName = null;
+        }
+    }
+
+    // İsim değerlerini güncellemek için tek bir metod
+    private void UpdateNames()
+    {
+        // Client bilgilerini güncelle
+        if (!string.IsNullOrEmpty(selectedClientId) && Guid.TryParse(selectedClientId, out var clientId) && clientId != Guid.Empty)
+        {
+            caseModel.ClientId = clientId;
+            var client = clients.FirstOrDefault(c => c.Id == clientId);
+            if (client != null)
+            {
+                caseModel.ClientName = client.FullName;
+            }
+        }
+        else
+        {
+            // Boş veya geçersiz seçim durumunda
+            caseModel.ClientId = Guid.Empty;
+            caseModel.ClientName = null;
+        }
+
+        // Karşı taraf bilgilerini güncelle
+        if (!string.IsNullOrEmpty(selectedOpposingPartyId) && Guid.TryParse(selectedOpposingPartyId, out var opposingId) && opposingId != Guid.Empty)
+        {
+            caseModel.OpposingPartyId = opposingId;
+            var opposingParty = clients.FirstOrDefault(c => c.Id == opposingId);
+            if (opposingParty != null)
+            {
+                caseModel.OpposingPartyName = opposingParty.FullName;
+            }
+        }
+        else
+        {
+            caseModel.OpposingPartyId = null;
+            caseModel.OpposingPartyName = null;
+        }
+
+        // Atanan kişi bilgilerini güncelle
+        if (!string.IsNullOrEmpty(selectedAssignedToId) && Guid.TryParse(selectedAssignedToId, out var assignedId) && assignedId != Guid.Empty)
+        {
+            caseModel.AssignedToId = assignedId;
+            var assignedTo = users.FirstOrDefault(u => u.Id == assignedId);
+            if (assignedTo != null)
+            {
+                caseModel.AssignedToName = $"{assignedTo.FirstName} {assignedTo.LastName}";
+            }
+        }
+        else
+        {
+            caseModel.AssignedToId = null;
+            caseModel.AssignedToName = null;
+        }
+    }
+
+    private async Task Submit()
+    {
+        if (isLoading) return;
+
+        // Dropdown seçimlerini modele aktar
+        UpdateGroup();
+        UpdateNames();
+
+        await form?.Validate();
+        if (form?.IsValid ?? false)
+        {
+            if (Case == null)
+            {
+                // Create new case
+                caseModel.CreatedBy = userEmail;
+                //await BasePage.CaseService.CreateAsync(caseModel);
+            }
+            else
+            {
+                // Update existing case
+                caseModel.ModifiedBy = userEmail;
+                //await BasePage.CaseService.UpdateAsync(caseModel);
+            }
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+} 

@@ -1,0 +1,92 @@
+@page "/Account/organisation-information"
+
+@inject BasePage BasePage
+
+@if (loading)
+{
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-7" />
+}
+<MudContainer MaxWidth="MaxWidth.Small" Class="d-flex align-center justify-center" Style="height: 100vh;">
+    @if (organisationId == Guid.Empty)
+    {
+        <MudText>This page shows full content only to logged-in users. Please log in to access the full content. Membership is free.</MudText>
+        <MudLink OnClick="@(() => BasePage.RegisterPage())" Underline="Underline.None" Color="Color.Primary">
+            Register Here
+        </MudLink>
+    }
+    else
+    {
+        <MudCard Elevation="3" Class="rounded-lg" Style="width: 100%; max-width: 500px;">
+            <MudCardHeader Style="background-color: var(--mud-palette-primary);">
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h5" Style="color: white">Organisation Information</MudText>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent Class="pa-6">
+                <EditForm Model="@organisation" OnValidSubmit="SaveChangesAsync">
+                    <DataAnnotationsValidator />
+                    <MudGrid Spacing="4">
+                        <MudItem xs="12" md="10">
+                            <MudTextField @bind-Value="organisation.Name"
+                                          Label="Organisation Name"
+                                          Variant="Variant.Outlined"
+                                          For="@(() => organisation.Name)" />
+                        </MudItem>
+
+                        @if (!string.IsNullOrEmpty(errorMessage))
+                        {
+                            <MudItem xs="12">
+                                <MudAlert Severity="Severity.Error" Class="my-2">@errorMessage</MudAlert>
+                            </MudItem>
+                        }
+
+                        <MudItem xs="12" Class="d-flex justify-end">
+                            <MudButton ButtonType="ButtonType.Submit"
+                                       Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       Size="Size.Large">
+                                Save Changes
+                            </MudButton>
+                        </MudItem>
+                    </MudGrid>
+                </EditForm>
+            </MudCardContent>
+        </MudCard>
+    }
+</MudContainer>
+
+@code {
+    private Organisation organisation = new();
+    private string errorMessage;
+    private string newPassword;
+    private bool showPassword;
+    private Guid organisationId = Guid.Empty;
+    private string userEmail;
+    private bool loading = true;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        loading = true;
+        // organisationId = await BasePage.SessionService.GetOrganisationIdAsync();
+        // userEmail = await BasePage.SessionService.GetUserEmailAsync();
+        organisation = await BasePage.PostApiAsync<Organisation>("Organisation/get", new { organisationId });
+        loading = false;
+        StateHasChanged();
+    }
+
+    private async Task SaveChangesAsync()
+    {
+        try
+        {
+            organisation.ModifiedBy = userEmail;
+            //organisation = await BasePage.PutApiAsync<Organisation>("Organisation/Update", organisation);
+
+            BasePage.Snackbar.Add("Organisation information updated successfully!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+} 

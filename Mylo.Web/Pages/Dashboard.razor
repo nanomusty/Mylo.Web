@@ -1,7 +1,264 @@
 ﻿@page "/dashboard"
 
-<h3>Dashboard</h3>
+@inject BasePage BasePage
+@inject SessionInfo SessionInfo
+
+<MudContainer MaxWidth="MaxWidth.False" Class="mt-4">
+    @if (SessionInfo.OrganisationId == Guid.Empty)
+    {
+        <MudText>This page shows full content only to logged-in users. Please log in to access the full content. Membership is free.</MudText>
+        <MudLink OnClick="@(() => BasePage.RegisterPage())" Underline="Underline.None" Color="Color.Primary">
+            Register Here
+        </MudLink>
+    }
+    else
+    {
+        <div class="dashboard-watermark">
+            <!-- Top Stats Cards -->
+            <MudGrid>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Elevation="2" Class="pa-4">
+                        <div class="d-flex justify-space-between align-center">
+                            <div>
+                                <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Active Cases</MudText>
+                                <MudText Typo="Typo.h5">@activeCases</MudText>
+                            </div>
+                            <MudIcon Icon="@Icons.Material.Filled.Gavel" Color="Color.Primary" Size="Size.Large" />
+                        </div>
+                        <MudText Typo="Typo.caption" Color="Color.Primary">@newCasesThisMonth new cases this month</MudText>
+                    </MudPaper>
+                </MudItem>
+
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Elevation="2" Class="pa-4">
+                        <div class="d-flex justify-space-between align-center">
+                            <div>
+                                <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Upcoming Hearings</MudText>
+                                <MudText Typo="Typo.h5">@upcomingHearings</MudText>
+                            </div>
+                            <MudIcon Icon="@Icons.Material.Filled.Event" Color="Color.Error" Size="Size.Large" />
+                        </div>
+                        <MudText Typo="Typo.caption" Color="Color.Error">In the next 7 days</MudText>
+                    </MudPaper>
+                </MudItem>
+
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Elevation="2" Class="pa-4">
+                        <div class="d-flex justify-space-between align-center">
+                            <div>
+                                <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Active Clients</MudText>
+                                <MudText Typo="Typo.h5">@activeClients</MudText>
+                            </div>
+                            <MudIcon Icon="@Icons.Material.Filled.People" Color="Color.Info" Size="Size.Large" />
+                        </div>
+                        <MudText Typo="Typo.caption">@newClientsThisMonth new clients this month</MudText>
+                    </MudPaper>
+                </MudItem>
+
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Elevation="2" Class="pa-4">
+                        <div class="d-flex justify-space-between align-center">
+                            <div>
+                                <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Pending Payments</MudText>
+                                <MudText Typo="Typo.h5">$@pendingPayments</MudText>
+                            </div>
+                            <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Color="Color.Warning" Size="Size.Large" />
+                        </div>
+                        <MudText Typo="Typo.caption" Color="Color.Warning">@pendingPaymentsCount pending payments</MudText>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+
+            <!-- Main Content -->
+            <MudGrid Class="mt-4">
+                <!-- Upcoming Hearings -->
+                <MudItem xs="12" md="6">
+                    <MudPaper Elevation="2" Class="pa-4">
+                        <MudText Typo="Typo.h6" Class="mb-4">Upcoming Hearings</MudText>
+                        <MudList Clickable="true" T="string">
+                            <MudListItem T="string">
+                                <div class="d-flex">
+                                    <MudAvatar Color="Color.Error" Class="mr-2">3D</MudAvatar>
+                                    <div>
+                                        <MudText Typo="Typo.body2">Labor Case - John Smith</MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Error">Tomorrow, 10:30 AM</MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">4th Labor Court</MudText>
+                                    </div>
+                                </div>
+                            </MudListItem>
+                            <MudListItem T="string">
+                                <div class="d-flex">
+                                    <MudAvatar Color="Color.Warning" Class="mr-2">5D</MudAvatar>
+                                    <div>
+                                        <MudText Typo="Typo.body2">Compensation Case - Michael Brown</MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Warning">In 3 days, 2:15 PM</MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">2nd Civil Court</MudText>
+                                    </div>
+                                </div>
+                            </MudListItem>
+                            <MudListItem T="string">
+                                <div class="d-flex">
+                                    <MudAvatar Color="Color.Info" Class="mr-2">7D</MudAvatar>
+                                    <div>
+                                        <MudText Typo="Typo.body2">Divorce Case - Sarah Wilson</MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Info">In a week, 11:00 AM</MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">Family Court</MudText>
+                                    </div>
+                                </div>
+                            </MudListItem>
+                        </MudList>
+                    </MudPaper>
+                </MudItem>
+
+                <!-- Quick Actions -->
+                <MudItem xs="12" md="6">
+                    <MudPaper Elevation="2" Class="pa-4">
+                        <MudText Typo="Typo.h6" Class="mb-4">Quick Actions</MudText>
+                        <MudGrid>
+                            <MudItem xs="6">
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                StartIcon="@Icons.Material.Filled.Gavel" OnClick="@(() => BasePage.NavigationManager.NavigateTo("/file/cases"))">
+                                    Cases
+                                </MudButton>
+                            </MudItem>
+                            <MudItem xs="6">
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                StartIcon="@Icons.Material.Filled.PersonAdd" OnClick="@(() => BasePage.NavigationManager.NavigateTo("/file/clients"))">
+                                    Clients
+                                </MudButton>
+                            </MudItem>
+                            <MudItem xs="6">
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                StartIcon="@Icons.Material.Filled.Person" OnClick="@(() => BasePage.NavigationManager.NavigateTo("/file/debtors"))">
+                                    Debtors
+                                </MudButton>
+                            </MudItem>
+                            @* <MudItem xs="6">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                       StartIcon="@Icons.Material.Filled.Receipt" OnClick="@(() => BasePage.NavigationManager.NavigateTo("/payments"))">
+                                Payment Tracking
+                            </MudButton>
+                        </MudItem> *@
+                        </MudGrid>
+                    </MudPaper>
+                </MudItem>
+
+                <!-- Case Status -->
+                <MudItem xs="12">
+                    <MudPaper Elevation="2" Class="pa-4">
+                        <MudText Typo="Typo.h6" Class="mb-4">Case Tracking</MudText>
+                        <MudTable Items="@cases"
+                        Dense="true"
+                        Hover="true"
+                        Bordered="false"
+                        Striped="true"
+                        Loading="@loading"
+                        Breakpoint="Breakpoint.Sm"
+                        LoadingProgressColor="Color.Primary"
+                        Class="mt-4">
+                            <HeaderContent>
+                                <MudTh>Case Number</MudTh>
+                                <MudTh>Client</MudTh>
+                                <MudTh>Title</MudTh>
+                                <MudTh>Type</MudTh>
+                                <MudTh>Status</MudTh>
+                                <MudTh>Next Hearing</MudTh>
+                                <MudTh>Next Deadline</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd DataLabel="Case Number">@context.CaseNumber</MudTd>
+                                <MudTd DataLabel="Client">@context.ClientName</MudTd>
+                                <MudTd DataLabel="Title">@context.Title</MudTd>
+                                <MudTd DataLabel="Type">
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Primary">
+                                        @context.CaseType.ToString()
+                                    </MudChip>
+                                </MudTd>
+                                <MudTd DataLabel="Status">
+                                    <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context.CaseStatus)">
+                                        @context.CaseStatus.ToString()
+                                    </MudChip>
+                                </MudTd>
+                                <MudTd DataLabel="Next Hearing">
+                                    @(context.NextHearingDate.HasValue ? context.NextHearingDate.Value.ToString("dd MMM yyyy") : "-")
+                                </MudTd>
+                                <MudTd DataLabel="Next Deadline">
+                                    @(context.NextDeadline.HasValue ? context.NextDeadline.Value.ToString("dd MMM yyyy") : "-")
+                                </MudTd>
+                            </RowTemplate>
+                            <PagerContent>
+                                <MudTablePager />
+                            </PagerContent>
+                        </MudTable>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        </div>
+    }
+</MudContainer>
+
 
 @code {
+    private int activeCases = 0;
+    private int newCasesThisMonth = 5;
+    private int upcomingHearings = 8;
+    private int activeClients = 156;
+    private decimal pendingPayments = 45750.00m;
+    private int pendingPaymentsCount = 5;
+    private int newClientsThisMonth = 12;
+    private int newCases = 0;
+    private int newHearings = 0;
+    private int newPayments = 0;
+    private int newClients = 0;
+    private int newCasesThisWeek = 0;
+    private int newHearingsThisWeek = 0;
+    private int newPaymentsThisWeek = 0;
+    private int newClientsThisWeek = 0;
 
+    private List<CaseModel> cases = new();
+    private bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+         loading = true;
+
+        //var caseCount = await BasePage.CaseService.GetCountAsync(organisationId);
+
+        //activeCases = caseCount.COUNT;
+
+        await LoadCases();
+
+        loading = false;
+    }
+
+    private async Task LoadCases()
+    {
+       
+        try
+        {
+            //cases = await BasePage.CaseService.GetAllAsync(organisationId);
+        }
+        catch (Exception)
+        {
+            BasePage.Snackbar.Add("Error loading case list.", Severity.Error);
+        }
+       
+    }
+
+    private Color GetStatusColor(CaseStatus status)
+    {
+        return status switch
+        {
+            CaseStatus.Active => Color.Success,
+            CaseStatus.Pending => Color.Warning,
+            CaseStatus.OnHold => Color.Default,
+            CaseStatus.Closed => Color.Dark,
+            CaseStatus.Won => Color.Success,
+            CaseStatus.Lost => Color.Error,
+            CaseStatus.Settled => Color.Info,
+            CaseStatus.Appealed => Color.Warning,
+            CaseStatus.Archived => Color.Dark,
+            _ => Color.Default
+        };
+    }
 }

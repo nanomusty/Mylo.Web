@@ -1,0 +1,171 @@
+﻿@inject BasePage BasePage
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6" Color="Color.Primary">
+            @(debtorModel.Id == Guid.Empty ? "New Debtor" : "Edit Debtor")
+        </MudText>
+    </TitleContent>
+
+    <DialogContent>
+        <MudForm Model="debtorModel" @ref="form" Validation="@(async () => await ValidateInput())">
+            <MudGrid>
+                <MudItem xs="12" Class="d-flex justify-end">
+                    <MudText>Is Active?</MudText>
+                    <MudSwitch T="bool"
+                               Color="Color.Primary"
+                               @bind-Value="debtorModel.IsActive" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudText>First Name</MudText>
+                    <MudTextField @bind-Value="debtorModel.FirstName"
+                                  Required="true"
+                                  RequiredError="First name is required"
+                                  Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudText>Last Name</MudText>
+                    <MudTextField @bind-Value="debtorModel.LastName"
+                                  Required="true"
+                                  RequiredError="Last name is required"
+                                  Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudText>Identity Number</MudText>
+                    <MudTextField @bind-Value="debtorModel.IdentityNumber"
+                                  Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudText>Tax Number</MudText>
+                    <MudTextField @bind-Value="debtorModel.TaxNumber"
+                                  Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudText>Company Name</MudText>
+                    <MudTextField @bind-Value="debtorModel.CompanyName"
+                                  Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudText>Phone Number</MudText>
+                    <MudTextField @bind-Value="debtorModel.PhoneNumber"
+                                  Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudText>Email</MudText>
+                    <MudTextField @bind-Value="debtorModel.Email"
+                                  Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudText>Address</MudText>
+                    <MudTextField @bind-Value="debtorModel.Address"
+                                  Lines="3"
+                                  Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudText>Notes</MudText>
+                    <MudTextField @bind-Value="debtorModel.Notes"
+                                  Lines="4"
+                                  Variant="Variant.Outlined" />
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit" Disabled="@isLoading">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public DebtorModel? Debtor { get; set; }
+
+    private DebtorModel debtorModel = new();
+    private MudForm? form;
+    private bool isLoading;
+    private string userEmail = string.Empty;
+    private Guid organisationId = Guid.Empty;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        // userEmail = await BasePage.SessionService.GetUserEmailAsync();
+        // organisationId = await BasePage.SessionService.GetOrganisationIdAsync();
+
+        if (Debtor != null)
+        {
+            debtorModel = new DebtorModel
+                {
+                    Id = Debtor.Id,
+                    OrganisationId = Debtor.OrganisationId,
+                    FirstName = Debtor.FirstName,
+                    LastName = Debtor.LastName,
+                    IdentityNumber = Debtor.IdentityNumber,
+                    TaxNumber = Debtor.TaxNumber,
+                    CompanyName = Debtor.CompanyName,
+                    PhoneNumber = Debtor.PhoneNumber,
+                    Email = Debtor.Email,
+                    Address = Debtor.Address,
+                    Notes = Debtor.Notes,
+                    IsActive = Debtor.IsActive
+                };
+        }
+        else
+        {
+            debtorModel = new DebtorModel
+                {
+                    OrganisationId = organisationId,
+                    IsActive = true
+                };
+        }
+
+        await Task.CompletedTask;
+        StateHasChanged();
+    }
+
+    // Form doğrulama
+    private async Task ValidateInput()
+    {
+        await form!.Validate();
+    }
+
+    // Dialogı iptal etme
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    // Formu gönderme
+    private async Task Submit()
+    {
+        await ValidateInput();
+        if (form!.IsValid)
+        {
+            isLoading = true;
+            try
+            {
+                if (debtorModel.Id == Guid.Empty)
+                {
+                    debtorModel.Id = Guid.NewGuid();
+                    debtorModel.CreationDate = DateTime.UtcNow;
+                    debtorModel.CreatedBy = userEmail;
+                    //response = await BasePage.DebtorService.CreateAsync(debtorModel);
+                }
+                else
+                {
+                    debtorModel.ModifiedBy = userEmail;
+                    debtorModel.ModificationDate = DateTime.UtcNow;
+
+                    //response = await BasePage.DebtorService.UpdateAsync(debtorModel);
+                }
+                
+                MudDialog.Close(DialogResult.Ok(debtorModel));
+            }
+            finally
+            {
+                isLoading = false; // Yükleniyor durumunu kapatıyoruz.
+            }
+        }
+    }
+}

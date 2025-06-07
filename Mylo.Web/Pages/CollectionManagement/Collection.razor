@@ -1,0 +1,41 @@
+﻿@page "/collection-management/collections"
+
+@inject BasePage BasePage
+
+<MudContainer MaxWidth="MaxWidth.False" Class="mt-4">
+    @if (organisationId == Guid.Empty)
+    {
+        <MudText>This page shows full content only to logged-in users. Please log in to access the full content. Membership is free.</MudText>
+        <MudLink OnClick="@(() => BasePage.RegisterPage())" Underline="Underline.None" Color="Color.Primary">
+            Register Here
+        </MudLink>
+    }
+    else if (priceTier > PriceTier.Free || userType == UserType.SuperAdministrator)
+    {
+        <MudText>Welcome to the Collection Management page!</MudText>
+        <MudText>Here you can manage your collections effectively.</MudText>
+        <MudText>Use the navigation menu to explore different sections.</MudText>
+        <MudText>More features will be added soon.</MudText>
+    }
+    else
+    {
+        <p>This section will become available once user-generated data is present.</p>
+    }
+</MudContainer>
+
+@code {
+    Guid organisationId = Guid.Empty;
+    PriceTier priceTier = PriceTier.Free;
+    UserType userType = UserType.None;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        // organisationId = await BasePage.SessionService.GetOrganisationIdAsync();
+        // priceTier = await BasePage.SessionService.GetPriceTierAsync();
+        // userType = await BasePage.SessionService.GetUserTypeAsync();
+
+        await Task.CompletedTask;
+        StateHasChanged();
+    }
+}

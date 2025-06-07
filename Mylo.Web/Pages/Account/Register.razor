@@ -104,6 +104,9 @@
                 @*                 <MudButton Variant="Variant.Text" OnClick="@(() => BasePage.NavigationManager.NavigateTo("/pricing"))">
                     Back to Pricing
                 </MudButton> *@
+                <MudLink Href="/Account/Login" Class="ml-0">Back to Login</MudLink>
+
+
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!_success)"
                 OnClick="HandleRegistration">
                     Create Organization

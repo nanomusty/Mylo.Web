@@ -1,0 +1,188 @@
+﻿@page "/file/meetings"
+@inject BasePage BasePage
+@implements IDisposable
+
+<MudContainer MaxWidth="MaxWidth.False" Class="mt-4">
+    @if (loading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-7" />
+    }
+    @if (organisationId == Guid.Empty)
+    {
+        <MudText>This page shows full content only to logged-in users. Please log in to access the full content. Membership is free.</MudText>
+        <MudLink OnClick="@(() => BasePage.RegisterPage())" Underline="Underline.None" Color="Color.Primary">
+            Register Here
+        </MudLink>
+    }
+    else
+    {
+        <MudPaper Elevation="0" Class="pa-4">
+            <MudGrid>
+                <MudItem xs="12" sm="6">
+                    <MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">Meetings</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="6" Class="d-flex justify-end">
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.Add"
+                               OnClick="OpenCreateDialog">
+                        New Meeting
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+
+            <MudGrid Class="mt-4">
+                <MudItem xs="12" sm="6" md="4">
+                    <MudTextField T="string"
+                                  Placeholder="Search..."
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search"
+                                  IconSize="Size.Medium"
+                                  Immediate="true"
+                                  ValueChanged="SearchMeetings"
+                                  Value="@searchString" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6" md="4">
+                    <MudSwitch T="bool"
+                               Label="Show Upcoming Meetings"
+                               Color="Color.Primary"
+                               Value="@selectedStatus"
+                               ValueChanged="FilterByStatus" />
+                </MudItem>
+            </MudGrid>
+
+            <MudTable Items="@meetings" Dense="true" Hover="true" Bordered="true" Striped="true" Loading="@loading">
+                <HeaderContent>
+                    <MudTh>Meeting Type</MudTh>
+                    <MudTh>Date</MudTh>
+                    <MudTh>Topics</MudTh>
+                    <MudTh>Result</MudTh>
+                    <MudTh>Notes</MudTh>
+                    <MudTh>Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Meeting Type">@context.MeetingType</MudTd>
+                    <MudTd DataLabel="Date">@context.MeetingDate.ToString("yyyy-MM-dd HH:mm")</MudTd>
+                    <MudTd DataLabel="Topics">@context.Topics</MudTd>
+                    <MudTd DataLabel="Result">@context.Result</MudTd>
+                    <MudTd DataLabel="Notes">@context.Notes</MudTd>
+                    <MudTd DataLabel="Actions">
+                        <MudStack Row="true">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="@(() => OpenEditDialog(context))" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => DeleteMeeting(context))" />
+                        </MudStack>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+    }
+</MudContainer>
+
+@code {
+    private List<MeetingModel> meetings = new();
+    private bool loading = true;
+    private string searchString = string.Empty;
+    private bool selectedStatus = true;
+    private Guid organisationId;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        loading = true;
+        //organisationId = await BasePage.SessionService.GetOrganisationIdAsync();
+        await LoadMeetings();
+        StateHasChanged();
+    }
+
+    private async Task LoadMeetings()
+    {
+        loading = true;
+        try
+        {
+            string status = selectedStatus ? "Upcoming" : "Past";
+            //meetings = (await BasePage.MeetingService.GetAllAsync(organisationId, status)).ToList();
+        }
+        catch
+        {
+            BasePage.Snackbar.Add("Error loading meeting list.", Severity.Error);
+        }
+        loading = false;
+    }
+
+    private async Task SearchMeetings(string value)
+    {
+        searchString = value;
+        loading = true;
+        try
+        {
+            //meetings = (await BasePage.MeetingService.SearchAsync(organisationId, value)).ToList();
+        }
+        catch
+        {
+            BasePage.Snackbar.Add("Error performing search.", Severity.Error);
+        }
+        loading = false;
+    }
+
+    private async Task FilterByStatus(bool status)
+    {
+        selectedStatus = status;
+        await LoadMeetings();
+    }
+
+    private async Task OpenCreateDialog()
+    {
+        var dialog = await BasePage.DialogService.ShowAsync<MeetingDialog>("New Meeting");
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadMeetings();
+            BasePage.Snackbar.Add("Meeting added successfully.", Severity.Success);
+        }
+    }
+
+    private async Task OpenEditDialog(MeetingModel meeting)
+    {
+        var parameters = new DialogParameters { { "Meeting", meeting } };
+        var dialog = await BasePage.DialogService.ShowAsync<MeetingDialog>("Edit Meeting", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadMeetings();
+            BasePage.Snackbar.Add("Meeting updated successfully.", Severity.Success);
+        }
+    }
+
+    private async Task DeleteMeeting(MeetingModel meeting)
+    {
+        var confirm = await BasePage.DialogService.ShowMessageBox(
+            "Delete Confirmation",
+            "Are you sure you want to delete this meeting?",
+            "Yes",
+            "No",
+            options: new DialogOptions { MaxWidth = MaxWidth.ExtraSmall });
+
+        if (confirm == true)
+        {
+            try
+            {
+                // BasePage.MeetingService.DeleteAsync(organisationId, meeting.Id);
+                await LoadMeetings();
+                BasePage.Snackbar.Add("Meeting deleted successfully.", Severity.Success);
+            }
+            catch
+            {
+                BasePage.Snackbar.Add("Error deleting meeting.", Severity.Error);
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        meetings.Clear();
+        meetings = null;
+    }
+}

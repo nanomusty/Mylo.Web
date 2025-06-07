@@ -1,0 +1,223 @@
+﻿@page "/file/debtors"
+@implements IDisposable
+@inject BasePage BasePage
+
+<MudContainer MaxWidth="MaxWidth.False" Class="mt-4">
+    @if (loading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-7" />
+    }
+    @if (organisationId == Guid.Empty)
+    {
+        <MudText>This page shows full content only to logged-in users. Please log in to access the full content. Membership is free.</MudText>
+        <MudLink OnClick="@(() => BasePage.RegisterPage())" Underline="Underline.None" Color="Color.Primary">
+            Register Here
+        </MudLink>
+    }
+    else
+    {
+        <MudPaper Elevation="0" Class="pa-4">
+            <MudGrid>
+                <MudItem xs="12" sm="6">
+                    <MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">Debtors</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="6" Class="d-flex justify-end">
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.Add"
+                               OnClick="OpenCreateDialog">
+                        New Debtor
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+
+            <MudGrid Class="mt-4">
+                <MudItem xs="12" sm="6" md="4">
+                    <MudTextField T="string"
+                                  Placeholder="Search..."
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search"
+                                  IconSize="Size.Medium"
+                                  Class="mt-0"
+                                  Immediate="true"
+                                  ValueChanged="@(val => SearchDebtors(val))" />
+                </MudItem>
+                <MudItem xs="12" sm="6" md="4">
+                    <MudSwitch T="bool"
+                               Label="Show Active Debtors"
+                               Color="Color.Primary"
+                               Value="@selectedStatus"
+                               ValueChanged="@(val => FilterByStatus(val))" />
+                </MudItem>
+            </MudGrid>
+
+            <MudTable Items="@debtors"
+                      Dense="true"
+                      Hover="true"
+                      Bordered="true"
+                      Striped="true"
+                      Loading="@loading"
+                      LoadingProgressColor="Color.Primary">
+                <HeaderContent>
+                    <MudTh>Name</MudTh>
+                    <MudTh>Contact</MudTh>
+                    <MudTh>Company</MudTh>
+                    <MudTh>Identity / Tax No</MudTh>
+                    <MudTh>Status</MudTh>
+                    <MudTh>Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Name">
+                        <MudText>@context.FullName</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Contact">
+                        <MudStack>
+                            <MudText>@context.Email</MudText>
+                            <MudText>@context.PhoneNumber</MudText>
+                        </MudStack>
+                    </MudTd>
+                    <MudTd DataLabel="Company">
+                        <MudText>@context.CompanyName</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Identity / Tax No">
+                        <MudText>@context.IdentityNumber</MudText>
+                        <MudText>@context.TaxNumber</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Status">
+                        <MudChip T="string"
+                                 Size="Size.Small"
+                                 Color="@(context.IsActive ? Color.Success : Color.Error)">
+                            @(context.IsActive ? "Active" : "Passive")
+                        </MudChip>
+                    </MudTd>
+                    <MudTd DataLabel="Actions">
+                        <MudStack Row="true">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                           Color="Color.Primary"
+                                           Size="Size.Small"
+                                           OnClick="@(() => OpenEditDialog(context))" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                           Color="Color.Error"
+                                           Size="Size.Small"
+                                           OnClick="@(() => DeleteDebtor(context))" />
+                        </MudStack>
+                    </MudTd>
+                </RowTemplate>
+                <PagerContent>
+                    <MudTablePager />
+                </PagerContent>
+            </MudTable>
+        </MudPaper>
+    }
+</MudContainer>
+
+@code {
+    private List<DebtorModel> debtors = new();
+    private bool loading = true;
+    private string searchString = "";
+    private bool selectedStatus = true;
+    private Guid organisationId;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        loading = true;
+        //organisationId = await BasePage.SessionService.GetOrganisationIdAsync();
+        await LoadDebtors();
+        StateHasChanged();
+    }
+
+    private async Task LoadDebtors()
+    {
+        loading = true;
+        try
+        {
+            string selectedStatusString = selectedStatus ? "Active" : "Inactive";
+            //debtors = (await BasePage.DebtorService.GetAllAsync(organisationId, selectedStatusString)).ToList();
+        }
+        catch (Exception)
+        {
+            BasePage.Snackbar.Add("Error loading debtor list.", Severity.Error);
+        }
+        loading = false;
+    }
+
+    public async Task SearchDebtors(string val)
+    {
+        loading = true;
+        try
+        {
+            //debtors = (await BasePage.DebtorService.SearchAsync(organisationId, val)).ToList();
+        }
+        catch (Exception)
+        {
+            BasePage.Snackbar.Add("Error performing search.", Severity.Error);
+        }
+        loading = false;
+    }
+
+    private async Task FilterByStatus(bool status)
+    {
+        selectedStatus = status;
+        await LoadDebtors();
+    }
+
+    private async Task OpenCreateDialog()
+    {
+        var dialog = await BasePage.DialogService.ShowAsync<DebtorDialog>("New Debtor");
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadDebtors();
+            BasePage.Snackbar.Add("Debtor added successfully.", Severity.Success);
+        }
+    }
+
+    private async Task OpenEditDialog(DebtorModel debtor)
+    {
+        var parameters = new DialogParameters
+        {
+            { "Debtor", debtor }
+        };
+
+        var dialog = await BasePage.DialogService.ShowAsync<DebtorDialog>("Edit Debtor", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadDebtors();
+            BasePage.Snackbar.Add("Debtor updated successfully.", Severity.Success);
+        }
+    }
+
+    private async Task DeleteDebtor(DebtorModel debtor)
+    {
+        var confirm = await BasePage.DialogService.ShowMessageBox(
+            "Delete Confirmation",
+            "Are you sure you want to delete this debtor?",
+            "Yes",
+            "No",
+            options: new DialogOptions { MaxWidth = MaxWidth.ExtraSmall });
+
+        if (confirm == true)
+        {
+            try
+            {
+                //await BasePage.DebtorService.DeleteAsync(organisationId, debtor.Id);
+                await LoadDebtors();
+                BasePage.Snackbar.Add("Debtor deleted successfully.", Severity.Success);
+            }
+            catch (Exception)
+            {
+                BasePage.Snackbar.Add("Error deleting debtor.", Severity.Error);
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        debtors.Clear();
+        debtors = null;
+    }
+}

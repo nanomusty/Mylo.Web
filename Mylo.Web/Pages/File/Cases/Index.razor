@@ -1,0 +1,334 @@
+@page "/file/cases"
+
+@inject BasePage BasePage
+@implements IDisposable
+
+<MudContainer MaxWidth="MaxWidth.False" Class="mt-4">
+    @if (loading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-7" />
+    }
+    @if (organisationId == Guid.Empty)
+    {
+        <MudText>This page shows full content only to logged-in users. Please log in to access the full content. Membership is free.</MudText>
+        <MudLink OnClick="@(() => BasePage.RegisterPage())" Underline="Underline.None" Color="Color.Primary">
+            Register Here
+        </MudLink>
+    }
+    else
+    {        
+
+        <MudPaper Elevation="0" Class="pa-4">
+            <MudGrid>
+                <MudItem xs="12" sm="6">
+                    <MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">Cases</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="6" Class="d-flex justify-end">
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.Add"
+                               OnClick="OpenCreateDialog">
+                        New Case
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+
+            <MudGrid Class="mt-4">
+                <MudItem xs="12" sm="4" md="3">
+                    <MudTextField @bind-Value="searchString"
+                                  Label="Search"
+                                  Placeholder="Search..."
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search"
+                                  IconSize="Size.Medium"
+                                  Variant="Variant.Outlined"
+                                  FullWidth="true"
+                                  Immediate="true"
+                                  OnDebounceIntervalElapsed="SearchCases" />
+                </MudItem>
+                <MudItem xs="12" sm="4" md="3">
+                    <MudSelect T="string"
+                               Label="Case Type"
+                               Value="@(selectedType == null ? "All" : selectedType.ToString())"
+                               ValueChanged="@(value => FilterByTypeString(value))"
+                               Variant="Variant.Outlined"
+                               FullWidth="true"
+                               Immediate="true">
+                        <MudSelectItem Value="@("All")">All</MudSelectItem>
+                        @foreach (CaseType caseType in Enum.GetValues(typeof(CaseType)))
+                        {
+                            <MudSelectItem Value="@caseType.ToString()">@caseType.ToString()</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="4" md="3">
+                    <MudSelect T="string"
+                               Label="Case Status"
+                               Value="@(selectedStatus == null ? "All" : selectedStatus.ToString())"
+                               ValueChanged="@(value => FilterByStatusString(value))"
+                               Variant="Variant.Outlined"
+                               FullWidth="true"
+                               Immediate="true">
+                        <MudSelectItem Value="@("All")">All</MudSelectItem>
+                        @foreach (CaseStatus status in Enum.GetValues(typeof(CaseStatus)))
+                        {
+                            <MudSelectItem Value="@status.ToString()">@status.ToString()</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+            </MudGrid>
+
+            <MudTable Items="@cases"
+                      Dense="true"
+                      Hover="true"
+                      Bordered="false"
+                      Striped="true"
+                      Loading="@loading"
+                      Breakpoint="Breakpoint.Sm"
+                      LoadingProgressColor="Color.Primary"
+                      Class="mt-4">
+                <HeaderContent>
+                    <MudTh>Case Number</MudTh>
+                    <MudTh>Client</MudTh>
+                    <MudTh>Title</MudTh>
+                    <MudTh>Type</MudTh>
+                    <MudTh>Status</MudTh>
+                    <MudTh>Next Hearing</MudTh>
+                    <MudTh>Next Deadline</MudTh>
+                    <MudTh>Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Case Number">@context.CaseNumber</MudTd>
+                    <MudTd DataLabel="Client">@context.ClientName</MudTd>
+                    <MudTd DataLabel="Title">@context.Title</MudTd>
+                    <MudTd DataLabel="Type">
+                        <MudChip T="string" Size="Size.Small" Color="Color.Primary">
+                            @context.CaseType.ToString()
+                        </MudChip>
+                    </MudTd>
+                    <MudTd DataLabel="Status">
+                        <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context.CaseStatus)">
+                            @context.CaseStatus.ToString()
+                        </MudChip>
+                    </MudTd>
+                    <MudTd DataLabel="Next Hearing">
+                        @(context.NextHearingDate.HasValue ? context.NextHearingDate.Value.ToString("dd MMM yyyy") : "-")
+                    </MudTd>
+                    <MudTd DataLabel="Next Deadline">
+                        @(context.NextDeadline.HasValue ? context.NextDeadline.Value.ToString("dd MMM yyyy") : "-")
+                    </MudTd>
+                    <MudTd DataLabel="Actions">
+                        <MudStack Row="true">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                           Color="Color.Primary"
+                                           Size="Size.Small"
+                                           OnClick="@(() => OpenEditDialog(context))" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                           Color="Color.Error"
+                                           Size="Size.Small"
+                                           OnClick="@(() => DeleteCase(context))" />
+                        </MudStack>
+                    </MudTd>
+                </RowTemplate>
+                <PagerContent>
+                    <MudTablePager />
+                </PagerContent>
+            </MudTable>
+        </MudPaper>
+    }
+    </MudContainer>
+
+    @code {
+    private List<CaseModel> cases = new();
+    private bool loading = true;
+    private string searchString = "";
+    private CaseType? selectedType;
+    private CaseStatus? selectedStatus;
+    private Guid organisationId = Guid.Empty;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        loading = true;
+        // organisationId = await BasePage.SessionService.GetOrganisationIdAsync();
+        await LoadCases();
+        loading = false;
+        StateHasChanged();
+    }
+
+    private async Task LoadCases()
+    {
+        loading = true;
+        try
+        {
+            //cases = await BasePage.CaseService.GetAllAsync(organisationId);
+        }
+        catch (Exception)
+        {
+            BasePage.Snackbar.Add("Error loading case list.", Severity.Error);
+        }
+        loading = false;
+    }
+
+    private async Task SearchCases()
+    {
+        loading = true;
+        try
+        {
+            //cases = await BasePage.CaseService.SearchAsync(organisationId, searchString);
+        }
+        catch (Exception)
+        {
+            BasePage.Snackbar.Add("Error performing search.", Severity.Error);
+        }
+        loading = false;
+    }
+
+    private async Task FilterByType(CaseType? type)
+    {
+        if (!type.HasValue)
+        {
+            await LoadCases();
+            return;
+        }
+
+        loading = true;
+        try
+        {
+            //cases = await BasePage.CaseService.GetCasesByTypeAsync(organisationId, type.Value);
+        }
+        catch (Exception)
+        {
+            BasePage.Snackbar.Add("Error filtering cases.", Severity.Error);
+        }
+        loading = false;
+    }
+
+    private async Task FilterByStatus(CaseStatus? status)
+    {
+        if (!status.HasValue)
+        {
+            await LoadCases();
+            return;
+        }
+
+        loading = true;
+        try
+        {
+            //cases = await BasePage.CaseService.GetCasesByStatusAsync(organisationId, status.Value);
+        }
+        catch (Exception)
+        {
+            BasePage.Snackbar.Add("Error filtering cases.", Severity.Error);
+        }
+        loading = false;
+    }
+
+    private async Task FilterByTypeString(string typeStr)
+    {
+        if (typeStr == "All")
+        {
+            selectedType = null;
+            await LoadCases();
+            return;
+        }
+
+        if (Enum.TryParse<CaseType>(typeStr, out var type))
+        {
+            selectedType = type;
+            await FilterByType(type);
+        }
+    }
+
+    private async Task FilterByStatusString(string statusStr)
+    {
+        if (statusStr == "All")
+        {
+            selectedStatus = null;
+            await LoadCases();
+            return;
+        }
+
+        if (Enum.TryParse<CaseStatus>(statusStr, out var status))
+        {
+            selectedStatus = status;
+            await FilterByStatus(status);
+        }
+    }
+
+    private Color GetStatusColor(CaseStatus status)
+    {
+        return status switch
+        {
+            CaseStatus.Active => Color.Success,
+            CaseStatus.Pending => Color.Warning,
+            CaseStatus.OnHold => Color.Default,
+            CaseStatus.Closed => Color.Dark,
+            CaseStatus.Won => Color.Success,
+            CaseStatus.Lost => Color.Error,
+            CaseStatus.Settled => Color.Info,
+            CaseStatus.Appealed => Color.Warning,
+            CaseStatus.Archived => Color.Dark,
+            _ => Color.Default
+        };
+    }
+
+    private async Task OpenCreateDialog()
+    {
+        var dialog = await BasePage.DialogService.ShowAsync<CaseDialog>("New Case");
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadCases();
+            BasePage.Snackbar.Add("Case added successfully.", Severity.Success);
+        }
+    }
+
+    private async Task OpenEditDialog(CaseModel caseModel)
+    {
+        var parameters = new DialogParameters
+        {
+            { "Case", caseModel }
+        };
+
+        var dialog = await BasePage.DialogService.ShowAsync<CaseDialog>("Edit Case", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadCases();
+            BasePage.Snackbar.Add("Case updated successfully.", Severity.Success);
+        }
+    }
+
+    private async Task DeleteCase(CaseModel caseModel)
+    {
+        var confirm = await BasePage.DialogService.ShowMessageBox(
+            "Delete Confirmation",
+            "Are you sure you want to delete this case?",
+            "Yes",
+            "No",
+            options: new DialogOptions { MaxWidth = MaxWidth.ExtraSmall });
+
+        if (confirm == true)
+        {
+            try
+            {
+                //await BasePage.CaseService.DeleteAsync(caseModel.Id);
+                await LoadCases();
+                BasePage.Snackbar.Add("Case deleted successfully.", Severity.Success);
+            }
+            catch (Exception)
+            {
+                BasePage.Snackbar.Add("Error deleting case.", Severity.Error);
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        cases.Clear();
+        cases = null;
+    }
+} 

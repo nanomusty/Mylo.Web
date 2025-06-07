@@ -1,0 +1,137 @@
+﻿@page "/Account/Profile"
+@inject BasePage BasePage
+
+@if (loading)
+{
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-7" />
+}
+<MudContainer MaxWidth="MaxWidth.Large" Class="py-8">
+    @if (organisationId == Guid.Empty)
+    {
+        <MudText>This page shows full content only to logged-in users. Please log in to access the full content. Membership is free.</MudText>
+        <MudLink OnClick="@(() => BasePage.RegisterPage())" Underline="Underline.None" Color="Color.Primary">
+            Register Here
+        </MudLink>
+    }
+    else
+    {
+        <MudText Typo="Typo.h4" Class="mb-8">Profile Settings</MudText>
+        <MudGrid>
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="3" Class="rounded-lg">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Profile Information</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <div class="d-flex flex-column align-center">
+                            <MudAvatar Color="Color.Info" Size="Size.Large" Class="ma-2">
+                                @(string.IsNullOrEmpty(user.FirstName) ? "U" : user.FirstName[0])
+                            </MudAvatar>
+                            <MudText Typo="Typo.body1" Class="mt-4">@user.Email</MudText>
+                            <MudText Typo="Typo.body2" Color="Color.Success">@user.UserType.ToString()</MudText>
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" md="8">
+                <MudCard Elevation="3" Class="rounded-lg">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Edit Profile</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <EditForm Model="@user" OnValidSubmit="UpdateProfile">
+                            <DataAnnotationsValidator />
+                            <MudGrid>
+                                <MudItem xs="12" md="6">
+                                    <MudTextField @bind-Value="user.FirstName"
+                                                  Label="First Name"
+                                                  Variant="Variant.Outlined"
+                                                  For="@(() => user.FirstName)" />
+                                </MudItem>
+                                <MudItem xs="12" md="6">
+                                    <MudTextField @bind-Value="user.LastName"
+                                                  Label="Last Name"
+                                                  Variant="Variant.Outlined"
+                                                  For="@(() => user.LastName)" />
+                                </MudItem>
+                                <MudItem xs="12">
+                                    <MudTextField @bind-Value="user.Email"
+                                                  Label="Email"
+                                                  Variant="Variant.Outlined"
+                                                  InputType="InputType.Email"
+                                                  Disabled="true"
+                                                  For="@(() => user.Email)" />
+                                </MudItem>
+                                <MudItem xs="12">
+                                    <MudTextField @bind-Value="newPassword" 
+                                                  Label="New Password (leave empty to keep current)"
+                                                  Variant="Variant.Outlined"
+                                                  InputType="InputType.Password" />
+                                </MudItem>
+                            </MudGrid>
+                            <div class="d-flex justify-end mt-6">
+                                <MudButton ButtonType="ButtonType.Submit"
+                                           Variant="Variant.Filled" Disabled="disable"
+                                           Color="Color.Info"
+                                           Size="Size.Large">
+                                    Update Profile
+                                </MudButton>
+                            </div>
+                        </EditForm>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    }
+</MudContainer>
+
+@code {
+    private User user = new();
+    private string newPassword = string.Empty;
+    private Guid organisationId = Guid.Empty;
+    private string userEmail = string.Empty;
+    private bool loading = true;
+    private bool disable = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        
+        loading = true;
+        // organisationId = await BasePage.SessionService.GetOrganisationIdAsync();
+        // userEmail = await BasePage.SessionService.GetUserEmailAsync();
+        // Guid userId = await BasePage.SessionService.GetUserIdAsync();
+        // user = await BasePage.UserService.GetAsync(organisationId, userId);
+        loading = false; 
+        disable = userEmail == "demo@mylolaw.work";
+        StateHasChanged();
+    }
+
+    private async Task UpdateProfile(EditContext context)
+    {
+        if (context.Validate())
+        {
+            try
+            {
+                // Şifre değiştirilecekse
+                if (!string.IsNullOrEmpty(newPassword))
+                {
+                    //user.Password = Cryptology.EncryptAES(newPassword);
+                }
+
+                user.ModifiedBy = user.Email;
+                //await BasePage.UserService.UpdateAsync(user);
+
+                BasePage.Snackbar.Add("Profile updated successfully!", Severity.Success);
+            }
+            catch (Exception ex)
+            {
+                BasePage.Snackbar.Add($"Error updating profile: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+}

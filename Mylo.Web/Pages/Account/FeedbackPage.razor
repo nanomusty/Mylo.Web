@@ -1,0 +1,205 @@
+@page "/Account/feedback"
+
+@inject BasePage BasePage
+
+@if (loading)
+{
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-7" />
+}
+<MudContainer MaxWidth="MaxWidth.Large" Class="py-8">
+    @if (organisationId == Guid.Empty)
+    {
+        <MudText>This page shows full content only to logged-in users. Please log in to access the full content. Membership is free.</MudText>
+        <MudLink OnClick="@(() => BasePage.RegisterPage())" Underline="Underline.None" Color="Color.Primary">
+            Register Here
+        </MudLink>
+    }
+    else
+    {
+        <MudGrid>
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="3" Class="rounded-lg">
+                    <MudCardHeader Style="background-color: var(--mud-palette-primary);">
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h5" Style="color: white">Send Feedback</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent Class="pa-6">
+                        <EditForm Model="@newFeedback" OnValidSubmit="SendFeedbackAsync">
+                            <DataAnnotationsValidator />
+                            <MudStack Spacing="4">
+                                <!-- Subject MudSelect -->
+                                <MudSelect T="FeedbackSubject" @bind-Value="newFeedback.Subject"
+                                           Label="Subject" Variant="Variant.Outlined"
+                                           Required="true">
+                                    @foreach (FeedbackSubject subject in Enum.GetValues(typeof(FeedbackSubject)))
+                                    {
+                                        <MudSelectItem Value="@subject">@subject.ToString().Replace("Request", " Request")</MudSelectItem>
+                                    }
+                                </MudSelect>
+
+                                <!-- Message TextField -->
+                                <MudTextField @bind-Value="newFeedback.Message"
+                                              Label="Message"
+                                              Lines="4"
+                                              Variant="Variant.Outlined"
+                                              For="@(() => newFeedback.Message)"
+                                              Required="true" />
+
+                                @if (!string.IsNullOrEmpty(errorMessage))
+                                {
+                                    <MudAlert Severity="Severity.Error" Class="my-2">@errorMessage</MudAlert>
+                                }
+
+                                @if (isFeedbackSent)
+                                {
+                                    <MudAlert Severity="Severity.Success" Class="my-2">
+                                        Feedback sent successfully! We will get back to you soon.
+                                    </MudAlert>
+                                }
+
+                                <MudButton ButtonType="ButtonType.Submit"
+                                           Variant="Variant.Filled"
+                                           Color="Color.Primary"
+                                           FullWidth="true"
+                                           Disabled="@(isSubmitting)">
+                                    @if (isSubmitting)
+                                    {
+                                        <MudProgressCircular Color="Color.Info" Indeterminate="true" Size="Size.Small" />
+                                    } Send Feedback
+                                </MudButton>
+                            </MudStack>
+                        </EditForm>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" md="8">
+                <MudCard Elevation="3" Class="rounded-lg">
+                    <MudCardHeader Style="background-color: var(--mud-palette-primary);">
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h5" Style="color: white">My Feedbacks</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent Class="pa-6">
+                        @if (feedbacks == null)
+                        {
+                            <MudProgressCircular Color="Color.Info" Indeterminate="true" />
+                        }
+                        else if (!feedbacks.Any())
+                        {
+                            <MudText>No feedbacks found.</MudText>
+                        }
+                        else
+                        {
+                            <MudStack>
+                                @foreach (var feedback in feedbacks)
+                                {
+                                    <MudCard Elevation="0" Outlined="true">
+                                        <MudCardHeader>
+                                            <CardHeaderContent>
+                                                <MudText Typo="Typo.h6">@feedback.Subject</MudText>
+                                                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                                    @feedback.CreationDate.ToString("dd MMM yyyy HH:mm")
+                                                </MudText>
+                                            </CardHeaderContent>
+                                            <CardHeaderActions>
+                                                <MudChip T="FeedbackStatus" Color="@GetStatusColor(feedback.Status)" Size="Size.Small">
+                                                    @feedback.Status
+                                                </MudChip>
+                                            </CardHeaderActions>
+                                        </MudCardHeader>
+                                        <MudCardContent>
+                                            <MudText>@feedback.Message</MudText>
+                                            @if (!string.IsNullOrEmpty(feedback.Response))
+                                            {
+                                                <MudDivider Class="my-4" />
+                                                <MudText Color="Color.Info" Typo="Typo.subtitle2">Response:</MudText>
+                                                <MudText>@feedback.Response</MudText>
+                                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                                    Responded by @feedback.RespondedBy on @feedback.ResponseDate?.ToString("dd MMM yyyy HH:mm")
+                                                </MudText>
+                                            }
+                                        </MudCardContent>
+                                    </MudCard>
+                                }
+                            </MudStack>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    }
+</MudContainer>
+
+@code {
+    private Mylo.Web.ObjectModels.Feedback newFeedback = new();
+    private IEnumerable<Mylo.Web.ObjectModels.Feedback> feedbacks;
+    private string errorMessage;
+    private bool isSubmitting;
+    private bool isFeedbackSent;
+    private Guid organisationId = Guid.Empty;
+    string userEmail = string.Empty;
+    private bool loading = true;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        loading = true;
+        // organisationId = await BasePage.SessionService.GetOrganisationIdAsync();
+        // userEmail = await BasePage.SessionService.GetUserEmailAsync();
+        await LoadFeedbacks();
+
+        loading = false;
+        StateHasChanged();
+    }
+
+    private async Task LoadFeedbacks()
+    {
+        try
+        {
+            //feedbacks = await BasePage.FeedbackService.GetAllAsync(organisationId);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Failed to load feedbacks: " + ex.Message;
+        }
+    }
+
+    private async Task SendFeedbackAsync()
+    {
+        try
+        {
+            isSubmitting = true;
+            errorMessage = null;
+            newFeedback.OrganisationId = organisationId;
+            newFeedback.Status = FeedbackStatus.New;
+            newFeedback.CreatedBy = userEmail;
+
+            //await BasePage.FeedbackService.InsertAsync(newFeedback);
+
+            isFeedbackSent = true;
+            BasePage.Snackbar.Add("Feedback sent successfully!", Severity.Success);
+            newFeedback = new();
+            await LoadFeedbacks();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Failed to send feedback: " + ex.Message;
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private Color GetStatusColor(FeedbackStatus status) => status switch
+    {
+        FeedbackStatus.New => Color.Info,
+        FeedbackStatus.InProgress => Color.Warning,
+        FeedbackStatus.Completed => Color.Success,
+        FeedbackStatus.Rejected => Color.Error,
+        _ => Color.Default
+    };
+}

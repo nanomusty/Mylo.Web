@@ -1,0 +1,171 @@
+﻿@page "/cost-management/expenses"
+@inject BasePage BasePage
+
+<MudContainer MaxWidth="MaxWidth.False" Class="mt-4">
+    @if (loading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-7" />
+    }
+    @if (organisationId == Guid.Empty)
+    {
+        <MudText>This page shows full content only to logged-in users. Please log in to access the full content. Membership is free.</MudText>
+        <MudLink OnClick="@(() => BasePage.RegisterPage())" Underline="Underline.None" Color="Color.Primary">
+            Register Here
+        </MudLink>
+    }
+    else
+    {
+        <MudPaper Elevation="0" Class="pa-4">
+            <MudGrid>
+                <MudItem xs="12" sm="6">
+                    <MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">Expenses</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="6" Class="d-flex justify-end">
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.Add"
+                               OnClick="OpenCreateDialog">
+                        New Expense
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+
+            <MudGrid Class="mt-4">
+                <MudItem xs="12" sm="6" md="4">
+                    <MudTextField T="string"
+                                  Placeholder="Search..."
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search"
+                                  IconSize="Size.Medium"
+                                  Immediate="true"
+                                  ValueChanged="SearchExpenses"
+                                  Value="@searchString" />
+                </MudItem>
+            </MudGrid>
+
+            <MudTable Items="@expenses" Dense="true" Hover="true" Bordered="true" Striped="true" Loading="@loading">
+                <HeaderContent>
+                    <MudTh>Expense Type</MudTh>
+                    <MudTh>Date</MudTh>
+                    <MudTh>Amount</MudTh>
+                    <MudTh>Status</MudTh>
+                    <MudTh>Notes</MudTh>
+                    <MudTh>Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Expense Type">@context.ExpenseType</MudTd>
+                    <MudTd DataLabel="Date">@context.Date.Value.ToString("yyyy-MM-dd HH:mm")</MudTd>
+                    <MudTd DataLabel="Amount">$@context.Amount</MudTd>
+                    <MudTd DataLabel="Status">
+                        <MudChip T="string" Size="Size.Small" Color="@(context.IsActive ? Color.Success : Color.Error)">
+                            @(context.IsActive ? "Active" : "Passive")
+                        </MudChip>
+                    </MudTd>
+                    <MudTd DataLabel="Notes">@context.Notes</MudTd>
+                    <MudTd DataLabel="Actions">
+                        <MudStack Row="true">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="@(() => OpenEditDialog(context))" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => DeleteExpense(context))" />
+                        </MudStack>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+    }
+</MudContainer>
+
+@code {
+    private List<Expense> expenses = new();
+    private bool loading = true;
+    private string searchString = string.Empty;
+    private Guid organisationId;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        loading = true;
+        //organisationId = await BasePage.SessionService.GetOrganisationIdAsync();
+        await LoadExpenses();
+        loading = false;
+        StateHasChanged();
+    }
+
+    private async Task LoadExpenses()
+    {
+        loading = true;
+        try
+        {
+            //expenses = (await BasePage.ExpenseService.GetAllAsync(organisationId)).ToList();
+        }
+        catch
+        {
+            BasePage.Snackbar.Add("Error loading expense list.", Severity.Error);
+        }
+        loading = false;
+    }
+
+    private async Task SearchExpenses(string value)
+    {
+        searchString = value;
+        loading = true;
+        try
+        {
+            //expenses = (await BasePage.ExpenseService.SearchAsync(organisationId, value)).ToList();
+        }
+        catch
+        {
+            BasePage.Snackbar.Add("Error performing search.", Severity.Error);
+        }
+        loading = false;
+    }
+
+    private async Task OpenCreateDialog()
+    {
+        var dialog = await BasePage.DialogService.ShowAsync<ExpenseDialog>("New Expense");
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadExpenses();
+            BasePage.Snackbar.Add("Expense added successfully.", Severity.Success);
+        }
+    }
+
+    private async Task OpenEditDialog(Expense expense)
+    {
+        var parameters = new DialogParameters { { "Expense", expense } };
+        var dialog = await BasePage.DialogService.ShowAsync<ExpenseDialog>("Edit Expense", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadExpenses();
+            BasePage.Snackbar.Add("Expense updated successfully.", Severity.Success);
+        }
+    }
+
+    private async Task DeleteExpense(Expense expense)
+    {
+        var confirm = await BasePage.DialogService.ShowMessageBox(
+            "Delete Confirmation",
+            "Are you sure you want to delete this expense?",
+            "Yes",
+            "No",
+            options: new DialogOptions { MaxWidth = MaxWidth.ExtraSmall });
+
+        if (confirm == true)
+        {
+            try
+            {
+                //await BasePage.ExpenseService.DeleteAsync(organisationId, expense.Id, await BasePage.SessionService.GetUserEmailAsync());
+                await LoadExpenses();
+                BasePage.Snackbar.Add("Expense deleted successfully.", Severity.Success);
+            }
+            catch
+            {
+                BasePage.Snackbar.Add("Error deleting expense.", Severity.Error);
+            }
+        }
+    }
+
+}

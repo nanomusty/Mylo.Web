@@ -1,0 +1,142 @@
+﻿@inject BasePage BasePage
+@inject IDialogService DialogService
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="form" Validated="OnValidated">
+            <MudGrid>
+                <MudItem xs="12">
+                    <MudText Typo="Typo.h6">@(_isEdit ? "Edit Expense" : "New Expense")</MudText>
+                </MudItem>
+
+                <MudItem xs="12" Class="d-flex justify-end">
+                    <MudSwitch T="bool"
+                    Color="Color.Primary"
+                               @bind-Value="expense.IsActive" />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudSelect T="ExpenseType" @bind-Value="expense.ExpenseType"
+                    Label="Expense Type"
+                    Required="true">
+                        <MudSelectItem Value="@(ExpenseType.CaseExpense)">Case Expense</MudSelectItem>
+                        <MudSelectItem Value="@(ExpenseType.GeneralOffice)">General Office</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+
+                @if (expense.ExpenseType == ExpenseType.CaseExpense)
+                {
+                    <MudItem xs="12">
+                        <MudSelect T="Guid?" Label="Select Case" @bind-Value="expense.CaseId" Required="true">
+                            <MudSelectItem Value="@( (Guid?) null )" Disabled="true">-- Select Case --</MudSelectItem>
+                            @if (cases.Any())
+                            {
+                                @foreach (var caseItem in cases)
+                                {
+                                    <MudSelectItem Value="@( (Guid?)caseItem.Id)">@caseItem.CaseNumber</MudSelectItem>
+                                }
+                            }
+                        </MudSelect>
+                    </MudItem>
+                }
+
+                <MudItem xs="12">
+                    <MudDatePicker Label="Date" @bind-Date="expense.Date" Required="true" />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudTextField T="decimal" Label="Amount" @bind-Value="expense.Amount" Required="true" />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudSwitch @bind-Value="expense.IsClientPaid" Color="Color.Primary" Label="Paid by Client" />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudTextField T="string" Label="Notes" @bind-Value="Expense.Notes" Lines="3" />
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Color="Color.Secondary" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Save">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; }
+    [Parameter] public Expense Expense { get; set; } = new();
+
+    private Expense expense = new();
+    private bool _isEdit => Expense != null;
+    private MudForm form;
+    private bool formIsValid = false;
+    private List<Expense> expenses = new();
+    private List<CaseModel> cases = new();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        if (Expense.Id != Guid.Empty)
+        {
+            expense = new Expense
+                {
+                    Id = Expense.Id,
+                    OrganisationId = Expense.OrganisationId,
+                    ExpenseType = Expense.ExpenseType,
+                    Date = Expense.Date,
+                    Amount = Expense.Amount,
+                    ClientId = Expense.ClientId,
+                    IsActive = Expense.IsActive,
+                    CaseId = Expense.CaseId,
+                    Notes = Expense.Notes,
+                    IsClientPaid = Expense.IsClientPaid
+                };
+        }
+        else
+        {
+            //expense.OrganisationId = await BasePage.SessionService.GetOrganisationIdAsync();
+            expense.Date = DateTime.Now;
+            expense.IsActive = true;
+        }
+
+        //cases = await BasePage.CaseService.GetAllAsync(expense.OrganisationId);
+        //expenses = (await BasePage.ExpenseService.GetAllAsync(expense.OrganisationId)).ToList();
+        StateHasChanged();
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Save()
+    {
+        await form.Validate();
+        if (form.IsValid)
+        {
+            if (expense.Id == Guid.Empty)
+            {
+                //expense.CreatedBy = await BasePage.SessionService.GetUserEmailAsync();
+                //await BasePage.ExpenseService.InsertAsync(expense);
+            }
+            else
+            {
+                //expense.ModifiedBy = await BasePage.SessionService.GetUserEmailAsync();
+                //await BasePage.ExpenseService.UpdateAsync(expense);
+            }
+
+            MudDialog.Close(DialogResult.Ok(expense));
+        }
+    }
+
+    private void OnValidated(bool valid)
+    {
+        formIsValid = valid;
+    }
+
+    public class ClientModel
+    {
+        public Guid Id { get; set; }
+        public string FullName { get; set; }
+    }
+}
