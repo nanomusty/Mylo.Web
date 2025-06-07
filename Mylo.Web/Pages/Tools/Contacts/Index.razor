@@ -105,7 +105,7 @@
     {
         try
         {            
-            contactCards = await BasePage.GetAllApiAsync<IEnumerable<ContactCard>>($"ContactCard/get-all?organisationId={SessionInfo.OrganisationId}");
+            contactCards = await BasePage.GetAllApiAsync<IEnumerable<ContactCard>>($"ContactCard/get-all?OrganisationId={SessionInfo.OrganisationId}");
         }
         catch (Exception ex)
         {
