@@ -156,7 +156,6 @@
         {
             client = new ClientModel
                 {
-                    Id = Client.Id,
                     OrganisationId = Client.OrganisationId,
                     FirstName = Client.FirstName,
                     LastName = Client.LastName,
@@ -275,7 +274,7 @@
         await form.Validate();
         if (form.IsValid)
         {
-            if (client is null)
+            if (Client is null)
             {
                 client.CreatedBy = SessionInfo.UserEmail;
                 await BasePage.InsertApiAsync<ClientModel>("Client/insert", client);
@@ -284,10 +283,10 @@
             {
                 client.ModifiedBy = SessionInfo.UserEmail;
                 await BasePage.UpdateApiAsync<ClientModel>("Client/update", client);
-            }            
-        }
+            }
 
-        MudDialog.Close(DialogResult.Ok(true));
+            MudDialog.Close(DialogResult.Ok(true));
+        }        
     }
 
     private void Cancel() => MudDialog.Cancel();
