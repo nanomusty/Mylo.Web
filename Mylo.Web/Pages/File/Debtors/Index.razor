@@ -1,13 +1,14 @@
 ﻿@page "/file/debtors"
 @implements IDisposable
 @inject BasePage BasePage
+@inject SessionInfo SessionInfo
 
 <MudContainer MaxWidth="MaxWidth.False" Class="mt-4">
     @if (loading)
     {
         <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-7" />
     }
-    @if (organisationId == Guid.Empty)
+    @if (SessionInfo.OrganisationId == Guid.Empty)
     {
         <MudText>This page shows full content only to logged-in users. Please log in to access the full content. Membership is free.</MudText>
         <MudLink OnClick="@(() => BasePage.RegisterPage())" Underline="Underline.None" Color="Color.Primary">
@@ -17,6 +18,7 @@
     else
     {
         <MudPaper Elevation="0" Class="pa-4">
+
             <MudGrid>
                 <MudItem xs="12" sm="6">
                     <MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">Debtors</MudText>
@@ -31,82 +33,78 @@
                 </MudItem>
             </MudGrid>
 
-            <MudGrid Class="mt-4">
-                <MudItem xs="12" sm="6" md="4">
-                    <MudTextField T="string"
-                                  Placeholder="Search..."
-                                  Adornment="Adornment.Start"
-                                  AdornmentIcon="@Icons.Material.Filled.Search"
-                                  IconSize="Size.Medium"
-                                  Class="mt-0"
-                                  Immediate="true"
-                                  ValueChanged="@(val => SearchDebtors(val))" />
-                </MudItem>
-                <MudItem xs="12" sm="6" md="4">
-                    <MudSwitch T="bool"
-                               Label="Show Active Debtors"
-                               Color="Color.Primary"
-                               Value="@selectedStatus"
-                               ValueChanged="@(val => FilterByStatus(val))" />
-                </MudItem>
-            </MudGrid>
+            <MudDataGrid T="DebtorModel" Items="@debtors"
+                         Dense="true"
+                         Hover="true"
+                         Striped="true"
+                         Bordered="true"
+                         Loading="@loading"
+                         Filterable="true"
+                         Sortable="true"
+                         LoadingProgressColor="Color.Primary">
 
-            <MudTable Items="@debtors"
-                      Dense="true"
-                      Hover="true"
-                      Bordered="true"
-                      Striped="true"
-                      Loading="@loading"
-                      LoadingProgressColor="Color.Primary">
-                <HeaderContent>
-                    <MudTh>Name</MudTh>
-                    <MudTh>Contact</MudTh>
-                    <MudTh>Company</MudTh>
-                    <MudTh>Identity / Tax No</MudTh>
-                    <MudTh>Status</MudTh>
-                    <MudTh>Actions</MudTh>
-                </HeaderContent>
-                <RowTemplate>
-                    <MudTd DataLabel="Name">
-                        <MudText>@context.FullName</MudText>
-                    </MudTd>
-                    <MudTd DataLabel="Contact">
-                        <MudStack>
-                            <MudText>@context.Email</MudText>
-                            <MudText>@context.PhoneNumber</MudText>
-                        </MudStack>
-                    </MudTd>
-                    <MudTd DataLabel="Company">
-                        <MudText>@context.CompanyName</MudText>
-                    </MudTd>
-                    <MudTd DataLabel="Identity / Tax No">
-                        <MudText>@context.IdentityNumber</MudText>
-                        <MudText>@context.TaxNumber</MudText>
-                    </MudTd>
-                    <MudTd DataLabel="Status">
-                        <MudChip T="string"
-                                 Size="Size.Small"
-                                 Color="@(context.IsActive ? Color.Success : Color.Error)">
-                            @(context.IsActive ? "Active" : "Passive")
-                        </MudChip>
-                    </MudTd>
-                    <MudTd DataLabel="Actions">
-                        <MudStack Row="true">
-                            <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                                           Color="Color.Primary"
-                                           Size="Size.Small"
-                                           OnClick="@(() => OpenEditDialog(context))" />
-                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                                           Color="Color.Error"
-                                           Size="Size.Small"
-                                           OnClick="@(() => DeleteDebtor(context))" />
-                        </MudStack>
-                    </MudTd>
-                </RowTemplate>
+                <Header>
+                    <MudButton StartIcon="@Icons.Material.Filled.Refresh"
+                               OnClick="Refresh"
+                               Color="Color.Primary"
+                               Style="margin: 8px;">
+                        Refresh
+                    </MudButton>
+                </Header>
+
+                <Columns>
+                    <PropertyColumn Property="x => x.FullName" Title="Name" />
+                    <TemplateColumn Title="Contact" Sortable="false" Filterable="false">
+                        <CellTemplate>
+                            <MudStack>
+                                <MudText>@context.Item.Email</MudText>
+                                <MudText>@context.Item.PhoneNumber</MudText>
+                            </MudStack>
+                        </CellTemplate>
+                    </TemplateColumn>
+                    <PropertyColumn Property="x => x.CompanyName" Title="Company" />
+                    <TemplateColumn Title="Identity / Tax No" Sortable="false" Filterable="false">
+                        <CellTemplate>
+                            <MudText>@context.Item.IdentityNumber</MudText>
+                            <MudText>@context.Item.TaxNumber</MudText>
+                        </CellTemplate>
+                    </TemplateColumn>
+                    <PropertyColumn Property="x => x.IsActive" Title="Status">
+                        <CellTemplate>
+                            <MudChip Color="@(context.Item.IsActive ? Color.Success : Color.Error)"
+                                     Size="Size.Small">
+                                @(context.Item.IsActive ? "Active" : "Passive")
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <TemplateColumn CellClass="d-flex justify-end">
+                        <CellTemplate>
+                            <MudTooltip Text="View Details">
+                                <MudIconButton Size="@Size.Small"
+                                               Icon="@Icons.Material.Outlined.Info"
+                                               OnClick="() => Info(context.Item)"
+                                               Color="Color.Info" />
+                            </MudTooltip>
+                            <MudTooltip Text="Edit">
+                                <MudIconButton Icon="@Icons.Material.Outlined.Edit"
+                                               Size="Size.Small"
+                                               Color="Color.Primary"
+                                               OnClick="@(() => OpenEditDialog(context.Item))" />
+                            </MudTooltip>
+                            <MudTooltip Text="Delete">
+                                <MudIconButton Icon="@Icons.Material.Outlined.Delete"
+                                               Size="Size.Small"
+                                               Color="Color.Error"
+                                               OnClick="@(() => DeleteDebtor(context.Item))" />
+                            </MudTooltip>
+                        </CellTemplate>
+                    </TemplateColumn>
+                </Columns>
                 <PagerContent>
-                    <MudTablePager />
+                    <MudDataGridPager T="DebtorModel" />
                 </PagerContent>
-            </MudTable>
+            </MudDataGrid>
+
         </MudPaper>
     }
 </MudContainer>
@@ -116,50 +114,31 @@
     private bool loading = true;
     private string searchString = "";
     private bool selectedStatus = true;
-    private Guid organisationId;
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnInitializedAsync()
     {
-        if (!firstRender) return;
         loading = true;
-        //organisationId = await BasePage.SessionService.GetOrganisationIdAsync();
         await LoadDebtors();
-        StateHasChanged();
+        loading = false;
     }
 
     private async Task LoadDebtors()
     {
-        loading = true;
         try
         {
-            string selectedStatusString = selectedStatus ? "Active" : "Inactive";
-            //debtors = (await BasePage.DebtorService.GetAllAsync(organisationId, selectedStatusString)).ToList();
+            debtors = await BasePage.GetAllApiAsync<List<DebtorModel>>($"Debtor/get-all?OrganisationId={SessionInfo.OrganisationId}");
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            BasePage.Snackbar.Add("Error loading debtor list.", Severity.Error);
+            BasePage.Snackbar.Add($"An error occurred: {ex.Message}", Severity.Error);
         }
-        loading = false;
     }
 
-    public async Task SearchDebtors(string val)
+    private async Task Refresh()
     {
         loading = true;
-        try
-        {
-            //debtors = (await BasePage.DebtorService.SearchAsync(organisationId, val)).ToList();
-        }
-        catch (Exception)
-        {
-            BasePage.Snackbar.Add("Error performing search.", Severity.Error);
-        }
-        loading = false;
-    }
-
-    private async Task FilterByStatus(bool status)
-    {
-        selectedStatus = status;
         await LoadDebtors();
+        loading = false;
     }
 
     private async Task OpenCreateDialog()
@@ -204,7 +183,14 @@
         {
             try
             {
-                //await BasePage.DebtorService.DeleteAsync(organisationId, debtor.Id);
+                var data = new
+                {
+                    OrganisationId = SessionInfo.OrganisationId,
+                    Id = debtor.Id,
+                    DeletedBy = SessionInfo.UserEmail
+                };
+
+                await BasePage.DeleteApiAsync<DebtorModel>("Debtor/delete", data);
                 await LoadDebtors();
                 BasePage.Snackbar.Add("Debtor deleted successfully.", Severity.Success);
             }
@@ -213,6 +199,16 @@
                 BasePage.Snackbar.Add("Error deleting debtor.", Severity.Error);
             }
         }
+    }
+
+    private async Task Info(DebtorModel model)
+    {
+        var lst = new List<DebtorModel>();
+        lst.Add(model);
+
+        var parameters = new DialogParameters<LogInfo> { { x => x.Entity, lst } };
+
+        await BasePage.DialogService.ShowAsync<LogInfo>("Information", parameters);
     }
 
     public void Dispose()

@@ -1,4 +1,5 @@
 ﻿@inject BasePage BasePage
+@inject SessionInfo SessionInfo
 
 <MudDialog>
     <TitleContent>
@@ -13,59 +14,59 @@
                 <MudItem xs="12" Class="d-flex justify-end">
                     <MudText>Is Active?</MudText>
                     <MudSwitch T="bool"
-                               Color="Color.Primary"
-                               @bind-Value="debtorModel.IsActive" />
+                    Color="Color.Primary"
+                    @bind-Value="debtorModel.IsActive" />
                 </MudItem>
                 <MudItem xs="12" sm="6">
                     <MudText>First Name</MudText>
                     <MudTextField @bind-Value="debtorModel.FirstName"
-                                  Required="true"
-                                  RequiredError="First name is required"
-                                  Variant="Variant.Outlined" />
+                    Required="true"
+                    RequiredError="First name is required"
+                    Variant="Variant.Outlined" />
                 </MudItem>
                 <MudItem xs="12" sm="6">
                     <MudText>Last Name</MudText>
                     <MudTextField @bind-Value="debtorModel.LastName"
-                                  Required="true"
-                                  RequiredError="Last name is required"
-                                  Variant="Variant.Outlined" />
+                    Required="true"
+                    RequiredError="Last name is required"
+                    Variant="Variant.Outlined" />
                 </MudItem>
                 <MudItem xs="12" sm="6">
                     <MudText>Identity Number</MudText>
                     <MudTextField @bind-Value="debtorModel.IdentityNumber"
-                                  Variant="Variant.Outlined" />
+                    Variant="Variant.Outlined" />
                 </MudItem>
                 <MudItem xs="12" sm="6">
                     <MudText>Tax Number</MudText>
                     <MudTextField @bind-Value="debtorModel.TaxNumber"
-                                  Variant="Variant.Outlined" />
+                    Variant="Variant.Outlined" />
                 </MudItem>
                 <MudItem xs="12">
                     <MudText>Company Name</MudText>
                     <MudTextField @bind-Value="debtorModel.CompanyName"
-                                  Variant="Variant.Outlined" />
+                    Variant="Variant.Outlined" />
                 </MudItem>
                 <MudItem xs="12" sm="6">
                     <MudText>Phone Number</MudText>
                     <MudTextField @bind-Value="debtorModel.PhoneNumber"
-                                  Variant="Variant.Outlined" />
+                    Variant="Variant.Outlined" />
                 </MudItem>
                 <MudItem xs="12" sm="6">
                     <MudText>Email</MudText>
                     <MudTextField @bind-Value="debtorModel.Email"
-                                  Variant="Variant.Outlined" />
+                    Variant="Variant.Outlined" />
                 </MudItem>
                 <MudItem xs="12">
                     <MudText>Address</MudText>
                     <MudTextField @bind-Value="debtorModel.Address"
-                                  Lines="3"
-                                  Variant="Variant.Outlined" />
+                    Lines="3"
+                    Variant="Variant.Outlined" />
                 </MudItem>
                 <MudItem xs="12">
                     <MudText>Notes</MudText>
                     <MudTextField @bind-Value="debtorModel.Notes"
-                                  Lines="4"
-                                  Variant="Variant.Outlined" />
+                    Lines="4"
+                    Variant="Variant.Outlined" />
                 </MudItem>
             </MudGrid>
         </MudForm>
@@ -84,15 +85,9 @@
     private DebtorModel debtorModel = new();
     private MudForm? form;
     private bool isLoading;
-    private string userEmail = string.Empty;
-    private Guid organisationId = Guid.Empty;
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnInitializedAsync()
     {
-        if (!firstRender) return;
-        // userEmail = await BasePage.SessionService.GetUserEmailAsync();
-        // organisationId = await BasePage.SessionService.GetOrganisationIdAsync();
-
         if (Debtor != null)
         {
             debtorModel = new DebtorModel
@@ -115,57 +110,34 @@
         {
             debtorModel = new DebtorModel
                 {
-                    OrganisationId = organisationId,
+                    OrganisationId = SessionInfo.OrganisationId,
                     IsActive = true
                 };
         }
 
         await Task.CompletedTask;
-        StateHasChanged();
-    }
-
-    // Form doğrulama
-    private async Task ValidateInput()
-    {
-        await form!.Validate();
-    }
-
-    // Dialogı iptal etme
-    private void Cancel()
-    {
-        MudDialog.Cancel();
     }
 
     // Formu gönderme
     private async Task Submit()
     {
-        await ValidateInput();
-        if (form!.IsValid)
+        await form.Validate();
+        if (form.IsValid)
         {
-            isLoading = true;
-            try
+            if (debtorModel.Id == Guid.Empty)
             {
-                if (debtorModel.Id == Guid.Empty)
-                {
-                    debtorModel.Id = Guid.NewGuid();
-                    debtorModel.CreationDate = DateTime.UtcNow;
-                    debtorModel.CreatedBy = userEmail;
-                    //response = await BasePage.DebtorService.CreateAsync(debtorModel);
-                }
-                else
-                {
-                    debtorModel.ModifiedBy = userEmail;
-                    debtorModel.ModificationDate = DateTime.UtcNow;
+                debtorModel.CreatedBy = SessionInfo.UserEmail;
+                await BasePage.InsertApiAsync<DebtorModel>("Debtor/insert", debtorModel);
+            }
+            else
+            {
+                debtorModel.ModifiedBy = SessionInfo.UserEmail;
+                await BasePage.InsertApiAsync<DebtorModel>("Debtor/update", debtorModel);
+            }
 
-                    //response = await BasePage.DebtorService.UpdateAsync(debtorModel);
-                }
-                
-                MudDialog.Close(DialogResult.Ok(debtorModel));
-            }
-            finally
-            {
-                isLoading = false; // Yükleniyor durumunu kapatıyoruz.
-            }
+            MudDialog.Close(DialogResult.Ok(debtorModel));
         }
     }
+
+    private void Cancel() => MudDialog.Cancel();
 }

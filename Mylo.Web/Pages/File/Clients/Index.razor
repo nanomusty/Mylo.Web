@@ -25,25 +25,32 @@
                 </MudItem>
                 <MudItem xs="12" sm="6" Class="d-flex justify-end">
                     <MudButton Variant="Variant.Filled"
-                    Color="Color.Primary"
-                    StartIcon="@Icons.Material.Filled.Add"
-                    OnClick="OpenCreateDialog">
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.Add"
+                               OnClick="OpenCreateDialog">
                         New Client
                     </MudButton>
                 </MudItem>
             </MudGrid>
 
             <MudDataGrid T="ClientModel"
-            Items="@clients"
-            Hover="true"
-            Bordered="true"
-            Striped="true"
-            Loading="@loading"
-            LoadingProgressColor="Color.Primary"
-            Filterable="true"
-            Sortable="true"
-            Dense="true"
-            Class="mt-4">
+                         Items="@clients"
+                         Hover="true"
+                         Bordered="true"
+                         Striped="true"
+                         Loading="@loading"
+                         LoadingProgressColor="Color.Primary"
+                         Filterable="true"
+                         Sortable="true"
+                         Dense="true"
+                         Class="mt-4">
+                <Header>
+                    <MudButton StartIcon="@Icons.Material.Filled.Refresh"
+                               OnClick="Refresh" Color="Color.Primary"
+                               Style="margin: 8px;">
+                        Refresh
+                    </MudButton>
+                </Header>
                 <Columns>
                     <PropertyColumn Property="@(c => c.FullName)" Title="Name / Company">
                         <CellTemplate Context="context">
@@ -61,7 +68,7 @@
                     <PropertyColumn Property="@(c => c.ClientType)" Title="Type">
                         <CellTemplate Context="context">
                             <MudChip Size="Size.Small"
-                            Color="@(context.Item.ClientType == ClientType.Person ? Color.Info : Color.Success)">
+                                     Color="@(context.Item.ClientType == ClientType.Person ? Color.Info : Color.Success)">
                                 @(context.Item.ClientType == ClientType.Person ? "Person" : "Company")
                             </MudChip>
                         </CellTemplate>
@@ -70,7 +77,7 @@
                     <PropertyColumn Property="@(c => c.IsActive)" Title="Status">
                         <CellTemplate Context="context">
                             <MudChip Size="Size.Small"
-                            Color="@(context.Item.IsActive ? Color.Success : Color.Error)">
+                                     Color="@(context.Item.IsActive ? Color.Success : Color.Error)">
                                 @(context.Item.IsActive ? "Active" : "Passive")
                             </MudChip>
                         </CellTemplate>
@@ -79,9 +86,9 @@
                     <PropertyColumn Property="@(c => c.CaseCount)" Title="Case Count">
                         <CellTemplate Context="context">
                             <MudBadge Content="@context.Item.CaseCount"
-                            Color="Color.Primary"
-                            Overlap="true"
-                            Class="mx-6">
+                                      Color="Color.Primary"
+                                      Overlap="true"
+                                      Class="mx-6">
                                 <MudIcon Icon="@Icons.Material.Filled.Gavel" />
                             </MudBadge>
                         </CellTemplate>
@@ -91,23 +98,23 @@
                         <CellTemplate>
                             <MudTooltip Text="View Details">
                                 <MudIconButton Size="@Size.Small"
-                                Icon="@Icons.Material.Outlined.Info"
-                                OnClick="() => Info(context.Item)"
-                                Color="Color.Info" />
+                                               Icon="@Icons.Material.Outlined.Info"
+                                               OnClick="() => Info(context.Item)"
+                                               Color="Color.Info" />
                             </MudTooltip>
                             <MudTooltip Text="Edit">
                                 <MudIconButton Size="@Size.Small"
-                                Icon="@Icons.Material.Outlined.Edit"
-                                OnClick="() => OpenEditDialog(context.Item)"
-                                Disabled="SessionInfo.UserType < UserType.Administrator"
-                                Color="Color.Primary" />
+                                               Icon="@Icons.Material.Outlined.Edit"
+                                               OnClick="() => OpenEditDialog(context.Item)"
+                                               Disabled="SessionInfo.UserType < UserType.Administrator"
+                                               Color="Color.Primary" />
                             </MudTooltip>
                             <MudTooltip Text="Delete">
                                 <MudIconButton Size="@Size.Small"
-                                Icon="@Icons.Material.Outlined.Delete"
-                                OnClick="() => DeleteClient(context.Item)"
-                                Disabled="SessionInfo.UserType < UserType.Administrator"
-                                Color="Color.Error" />
+                                               Icon="@Icons.Material.Outlined.Delete"
+                                               OnClick="() => DeleteClient(context.Item)"
+                                               Disabled="SessionInfo.UserType < UserType.Administrator"
+                                               Color="Color.Error" />
                             </MudTooltip>
                         </CellTemplate>
                     </TemplateColumn>
@@ -115,14 +122,21 @@
             </MudDataGrid>
         </MudPaper>
     }
-</MudContainer>
+    </MudContainer>
 
-@code {
+    @code {
 
     private List<ClientModel> clients = new();
     private bool loading = true;
 
     protected override async Task OnInitializedAsync()
+    {
+        loading = true;
+        await LoadClients();
+        loading = false;
+    }
+
+    private async Task Refresh()
     {
         loading = true;
         await LoadClients();

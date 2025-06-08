@@ -38,6 +38,13 @@
             Hover="true"
             Striped="true"
             Loading="@loading">
+                <Header>
+                    <MudButton StartIcon="@Icons.Material.Filled.Refresh"
+                               OnClick="Refresh" Color="Color.Primary"
+                               Style="margin: 8px;">
+                        Refresh
+                    </MudButton>
+                </Header>
                 <Columns>
                     <PropertyColumn Property="x => x.IsActive" Title="Status">
                         <CellTemplate>
@@ -87,6 +94,13 @@
     private bool loading = false;
 
     protected override async Task OnInitializedAsync()
+    {
+        loading = true;
+        await LoadData();
+        loading = false;
+    }
+
+    private async Task Refresh()
     {
         loading = true;
         await LoadData();
