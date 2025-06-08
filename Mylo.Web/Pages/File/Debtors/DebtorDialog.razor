@@ -9,7 +9,7 @@
     </TitleContent>
 
     <DialogContent>
-        <MudForm Model="debtorModel" @ref="form" Validation="@(async () => await ValidateInput())">
+        <MudForm Model="debtorModel" @ref="form">
             <MudGrid>
                 <MudItem xs="12" Class="d-flex justify-end">
                     <MudText>Is Active?</MudText>
